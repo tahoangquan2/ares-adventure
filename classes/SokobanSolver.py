@@ -7,44 +7,44 @@ class SokobanSolver:
         self.current_step = -1
         self.operation_limit = 10**6
 
-    def can_move(self, state, y, x, dy, dx):
-        new_y, new_x = y + dy, x + dx
-        target_cell = state.get_cell(new_y, new_x)
+    def can_move(self, state, x, y, dx, dy):
+        new_x, new_y = x + dx, y + dy
+        target_cell = state.get_cell(new_x, new_y)
 
         if target_cell == '#':
             return False
 
         if target_cell in ['$', '*']:
-            return state.can_push_stone(new_y, new_x, dy, dx)
+            return state.can_push_stone(new_x, new_y, dx, dy)
 
         return True
 
-    def make_move(self, state, y, x, dy, dx):
+    def make_move(self, state, x, y, dx, dy):
         new_map = [list(row) for row in state.map]
-        new_y, new_x = y + dy, x + dx
+        new_x, new_y = x + dx, y + dy
 
         # Get the current cell type (with or without switch)
-        current_cell = state.get_cell(y, x)
+        current_cell = state.get_cell(x, y)
         is_on_switch = current_cell == '+'
 
         # Get the target cell type
-        target_cell = state.get_cell(new_y, new_x)
+        target_cell = state.get_cell(new_x, new_y)
         target_has_switch = target_cell in ['.', '*', '+']
 
         # Update the player's current position
-        new_map[y][x] = '.' if is_on_switch else ' '
+        new_map[x][y] = '.' if is_on_switch else ' '
 
         if target_cell in ['$', '*']:
             # Moving a stone
-            push_y, push_x = new_y + dy, new_x + dx
-            push_cell = state.get_cell(push_y, push_x)
+            push_x, push_y = new_x + dx, new_y + dy
+            push_cell = state.get_cell(push_x, push_y)
             push_has_switch = push_cell in ['.', '*', '+']
 
             # Update the stone's position
-            new_map[push_y][push_x] = '*' if push_has_switch else '$'
+            new_map[push_x][push_y] = '*' if push_has_switch else '$'
 
         # Update the player's new position
-        new_map[new_y][new_x] = '+' if target_has_switch else '@'
+        new_map[new_x][new_y] = '+' if target_has_switch else '@'
 
         return state.create_new_state(new_map)
 
@@ -73,11 +73,11 @@ class SokobanSolver:
             if not player_pos:
                 continue
 
-            y, x = player_pos
-            for dy, dx in directions:
-                if self.can_move(current_state, y, x, dy, dx):
-                    new_state = self.make_move(current_state, y, x, dy, dx)
-                    queue.append((new_state, path + [(dy, dx)]))
+            x, y = player_pos
+            for dx, dy in directions:
+                if self.can_move(current_state, x, y, dx, dy):
+                    new_state = self.make_move(current_state, x, y, dx, dy)
+                    queue.append((new_state, path + [(dx, dy)]))
 
         return False # Operation limit exceeded or no solution found
 
@@ -108,14 +108,14 @@ class SokobanSolver:
             if not player_pos:
                 continue
 
-            y, x = player_pos
-            for dy, dx in directions:
-                if self.can_move(current_state, y, x, dy, dx):
-                    new_state = self.make_move(current_state, y, x, dy, dx)
+            x, y = player_pos
+            for dx, dy in directions:
+                if self.can_move(current_state, x, y, dx, dy):
+                    new_state = self.make_move(current_state, x, y, dx, dy)
                     new_state_string = new_state.to_string()
 
                     if new_state_string not in state_paths or len(path) + 1 < len(state_paths[new_state_string]):
-                        stack.append((new_state, path + [(dy, dx)]))
+                        stack.append((new_state, path + [(dx, dy)]))
 
         return False # Operation limit exceeded or no solution found
 
