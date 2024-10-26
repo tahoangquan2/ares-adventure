@@ -15,10 +15,7 @@ class SokobanSolver:
             return False
 
         if target_cell in ['$', '*']:
-            # Check if we can push the stone
-            push_y, push_x = new_y + dy, new_x + dx
-            push_cell = state.get_cell(push_y, push_x)
-            return push_cell not in ['#', '$', '*']
+            return state.can_push_stone(new_y, new_x, dy, dx)
 
         return True
 
@@ -82,7 +79,7 @@ class SokobanSolver:
                     new_state = self.make_move(current_state, y, x, dy, dx)
                     queue.append((new_state, path + [(dy, dx)]))
 
-        return False  # Operation limit exceeded or no solution found
+        return False # Operation limit exceeded or no solution found
 
     def solve_dfs(self):
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -120,7 +117,7 @@ class SokobanSolver:
                     if new_state_string not in state_paths or len(path) + 1 < len(state_paths[new_state_string]):
                         stack.append((new_state, path + [(dy, dx)]))
 
-        return False  # Operation limit exceeded or no solution found
+        return False # Operation limit exceeded or no solution found
 
     def get_next_step(self):
         if not self.solution:
