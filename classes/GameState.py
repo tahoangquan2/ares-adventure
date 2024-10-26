@@ -4,15 +4,21 @@ class GameState:
 		self.height = len(map_data)
 		self.width = len(map_data[0]) if self.height > 0 else 0
 
-		# Initialize stone positions and weights
-		self.stone_weights = {}
+		# Initialize weight map with zeros
+		self.weight_map = [[0 for _ in range(self.width)] for _ in range(self.height)]
+
+		# Fill in weights where stones are located
 		stone_index = 0
 		for y in range(self.height):
 			for x in range(self.width):
-				if self.map[y][x] in ['$', '*']:
-					if stone_index < len(weights):
-						self.stone_weights[(y, x)] = weights[stone_index]
-						stone_index += 1
+				if self.map[y][x] in ['$', '*'] and stone_index < len(weights):
+					self.weight_map[y][x] = weights[stone_index]
+					stone_index += 1
+
+	def get_weight(self, y, x):
+		if 0 <= y < self.height and 0 <= x < self.width:
+			return self.weight_map[y][x]
+		return 0
 
 	def find_player(self):
 		for y in range(self.height):
@@ -51,23 +57,19 @@ class GameState:
 		return '\n'.join(''.join(row) for row in self.map)
 
 	def create_new_state(self, new_map):
-		new_state = GameState(new_map, [])  # Pass empty weights as we'll copy the dictionary
-		new_state.stone_weights = {}
+		new_state = GameState(new_map, [])
 
-		# Update stone positions while maintaining their weights
-		old_positions = list(self.stone_weights.keys())
-		old_weights = list(self.stone_weights.values())
+		# Create new weight map
+		new_state.weight_map = [[0 for _ in range(self.width)] for _ in range(self.height)]
 
-		# Find new stone positions
-		new_positions = []
-		for y in range(len(new_map)):
-			for x in range(len(new_map[0])):
-				if new_map[y][x] in ['$', '*']:
-					new_positions.append((y, x))
+		# Find stone movements and update weights
+		old_stones = self.find_stones()
+		new_stones = new_state.find_stones()
 
-		# Match old stones to new positions
-		for i in range(len(old_weights)):
-			if i < len(new_positions):
-				new_state.stone_weights[new_positions[i]] = old_weights[i]
+		# Copy weights to new positions
+		for old_pos, new_pos in zip(old_stones, new_stones):
+			old_y, old_x = old_pos
+			new_y, new_x = new_pos
+			new_state.weight_map[new_y][new_x] = self.weight_map[old_y][old_x]
 
 		return new_state
