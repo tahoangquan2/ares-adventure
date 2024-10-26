@@ -46,21 +46,20 @@ class GameState:
     def to_string(self):
         return '\n'.join(''.join(row) for row in self.map)
 
-    def create_new_state(self, new_map):
+    def create_new_state(self, new_map, stone_move = None):
         new_state = GameState(new_map, [])
-
-        # Create new weight map
         new_state.weight = [[0 for _ in range(self.height)] for _ in range(self.width)]
 
-        # Find stone movements and update weights
-        old_stones = self.find_stones()
-        new_stones = new_state.find_stones()
+        # Copy all weights first
+        for i in range(self.width):
+            for j in range(self.height):
+                new_state.weight[i][j] = self.weight[i][j]
 
-        # Copy weights to new positions
-        for old_pos, new_pos in zip(old_stones, new_stones):
-            old_x, old_y = old_pos
-            new_x, new_y = new_pos
+        # If a stone was moved, update its position in weight map
+        if stone_move:
+            (old_x, old_y), (new_x, new_y) = stone_move
             new_state.weight[new_x][new_y] = self.weight[old_x][old_y]
+            new_state.weight[old_x][old_y] = 0
 
         return new_state
 

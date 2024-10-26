@@ -34,6 +34,7 @@ class SokobanSolver:
         # Update the player's current position
         new_map[x][y] = '.' if is_on_switch else ' '
 
+        stone_move = None
         if target_cell in ['$', '*']:
             # Moving a stone
             push_x, push_y = new_x + dx, new_y + dy
@@ -42,11 +43,12 @@ class SokobanSolver:
 
             # Update the stone's position
             new_map[push_x][push_y] = '*' if push_has_switch else '$'
+            stone_move = ((new_x, new_y), (push_x, push_y))
 
         # Update the player's new position
         new_map[new_x][new_y] = '+' if target_has_switch else '@'
 
-        return state.create_new_state(new_map)
+        return state.create_new_state(new_map, stone_move)
 
     def solve_bfs(self):
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]

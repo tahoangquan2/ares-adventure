@@ -28,8 +28,8 @@ class GameGUI:
         style.configure('Game.TFrame', background='#ecf0f1')
         style.configure('Controls.TFrame', background='#ecf0f1')
         style.configure('Modern.TButton', padding = 10, font=('Helvetica', 10))
-        style.configure('Modern.TLabel', background = '#2c3e50', foreground='white', font=('Helvetica', 11))
-        style.configure('Controls.TLabel', background = '#ecf0f1', font=('Helvetica', 12))
+        style.configure('Modern.TLabel', background = '#2c3e50', foreground='white', font = ('Helvetica', 11))
+        style.configure('Controls.TLabel', background = '#ecf0f1', font = ('Helvetica', 12))
 
         # Configure main window
         self.root.geometry("1280x720")
@@ -69,7 +69,7 @@ class GameGUI:
             borderwidth = 0
         )
 
-        scrollbar = ttk.Scrollbar(list_container, orient=tk.VERTICAL, command=self.input_listbox.yview)
+        scrollbar = ttk.Scrollbar(list_container, orient = tk.VERTICAL, command = self.input_listbox.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.input_listbox.pack(side = tk.LEFT, fill=tk.BOTH, expand=True)
         self.input_listbox.config(yscrollcommand = scrollbar.set)
@@ -351,6 +351,7 @@ class GameGUI:
                 x1p, y1p = x1 + padding, y1 + padding
                 x2p, y2p = x2 - padding, y2 - padding
 
+                # Draw the cell/object first
                 if char == '#':
                     self.canvas.create_rectangle(x1, y1, x2, y2, fill = colors['#'], width = 0)
                 elif char in ['$', '*']:
@@ -361,15 +362,6 @@ class GameGUI:
                         self.canvas.create_oval(x1p, y1p, x2p, y2p,
                                             outline = colors['.'],
                                             width = 2)
-                    # Draw weight if exists for this stone
-                    weight = state.get_weight(x, y)
-                    if weight > 0:
-                        text_x = (x1 + x2) / 2
-                        text_y = (y1 + y2) / 2
-                        self.canvas.create_text(text_x, text_y,
-                                            text=str(weight),
-                                            fill='white',
-                                            font=('Helvetica', int(cell_size / 3)))
                 elif char == '@':
                     self.canvas.create_oval(x1p, y1p, x2p, y2p,
                                         fill = colors['@'],
@@ -383,6 +375,18 @@ class GameGUI:
                                         fill = colors['@'],
                                         outline = colors['.'],
                                         width = 3)
+
+                # Draw weight for all positions if not a wall
+                if char != '#':
+                    weight = state.get_weight(x, y)
+                    text_x = (x1 + x2) / 2
+                    text_y = (y1 + y2) / 2
+                    # Use white text for stones, black for other cells
+                    text_color = 'white' if char in ['$', '*'] else 'black'
+                    self.canvas.create_text(text_x, text_y,
+                                        text = str(weight),
+                                        fill = text_color,
+                                        font = ('Helvetica', int(cell_size / 3)))
 
     def toggle_play(self):
         if not self.is_solved:
