@@ -18,8 +18,9 @@ class GameGUI:
         self.is_solved = False
         self.current_step = 0
         self.weight_var = tk.StringVar(value="Total Weight: 0       Step: 0")
-        self.play_speed = 250  # milliseconds between moves
+        self.play_speed = 200  # milliseconds between moves
         self.old_selection = None # Store old selection when changing algorithm
+        self.new_slection = False # Check if new selection is made
 
         style = ttk.Style()
         style.theme_use('clam')
@@ -127,10 +128,12 @@ class GameGUI:
             prev_algorithm = self.selected_algorithm.get()
             new_algorithm = alg_map[selection[0]]
 
+            # print(prev_algorithm, " ", new_algorithm)
             if prev_algorithm != new_algorithm:
                 self.selected_algorithm.set(new_algorithm)
-                self.load_input_file(None, True)
-                self.reset_solve_state()
+                self.new_slection = True
+                self.load_input_file(None)
+                self.new_slection = False
 
     def create_game_display(self):
         game_frame = ttk.Frame(self.main_container, style = 'Game.TFrame')
@@ -206,11 +209,13 @@ class GameGUI:
         ok_button = ttk.Button(popup, text = "OK", command=popup.destroy)
         ok_button.pack(pady = (0, 10))
 
-    def load_input_file(self, event, new_slection = False):
+    def load_input_file(self, event):
         selection = self.input_listbox.curselection()
-        if new_slection:
+        # print(self.new_slection, self.old_selection, selection)
+        if self.new_slection == True:
             selection = self.old_selection
         self.old_selection = selection
+        # print(self.new_slection, self.old_selection, selection)
 
         if not selection:
             return

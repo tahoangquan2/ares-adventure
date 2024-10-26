@@ -23,7 +23,7 @@ class SokobanSolver:
         new_map = [list(row) for row in state.map]
         new_x, new_y = x + dx, y + dy
 
-        # Get the current cell type (with or without switch)
+        # Get the current cell type with or without switch
         current_cell = state.get_cell(x, y)
         is_on_switch = current_cell == '+'
 
