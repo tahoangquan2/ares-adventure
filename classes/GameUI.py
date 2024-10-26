@@ -16,9 +16,10 @@ class GameGUI:
         self.solver = None
         self.is_playing = False
         self.is_solved = False
-        self.total_weight = 0
-        self.weight_var = tk.StringVar(value = "Total Weight: 0")
-        self.play_speed = 300  # milliseconds between moves
+        self.current_step = 0
+        self.weight_var = tk.StringVar(value="Total Weight: 0       Step: 0")
+        self.play_speed = 250  # milliseconds between moves
+        self.old_selection = None # Store old selection when changing algorithm
 
         style = ttk.Style()
         style.theme_use('clam')
@@ -58,9 +59,9 @@ class GameGUI:
 
         self.input_listbox = tk.Listbox(
             list_container,
-            font=('Helvetica', 11),
-            bg='#34495e',
-            fg='white',
+            font = ('Helvetica', 11),
+            bg = '#34495e',
+            fg = 'white',
             selectmode = tk.SINGLE,
             relief = tk.FLAT,
             highlightthickness = 0,
@@ -99,7 +100,7 @@ class GameGUI:
             fg='white',
             selectmode=tk.SINGLE,
             relief=tk.FLAT,
-            highlightthickness=0,
+            highlightthickness = 0,
             selectbackground = '#3498db',
             selectforeground = 'white',
             borderwidth = 0,
@@ -123,8 +124,13 @@ class GameGUI:
         if selection:
             # Map selection to algorithm value
             alg_map = {0: "bfs", 1: "dfs"}
-            self.selected_algorithm.set(alg_map[selection[0]])
-            self.reset_solve_state()
+            prev_algorithm = self.selected_algorithm.get()
+            new_algorithm = alg_map[selection[0]]
+
+            if prev_algorithm != new_algorithm:
+                self.selected_algorithm.set(new_algorithm)
+                self.load_input_file(None, True)
+                self.reset_solve_state()
 
     def create_game_display(self):
         game_frame = ttk.Frame(self.main_container, style = 'Game.TFrame')
@@ -200,8 +206,12 @@ class GameGUI:
         ok_button = ttk.Button(popup, text = "OK", command=popup.destroy)
         ok_button.pack(pady = (0, 10))
 
-    def load_input_file(self, event):
+    def load_input_file(self, event, new_slection = False):
         selection = self.input_listbox.curselection()
+        if new_slection:
+            selection = self.old_selection
+        self.old_selection = selection
+
         if not selection:
             return
 
@@ -218,7 +228,7 @@ class GameGUI:
 
                     n = len(map_temp[0])
                     m = len(map_temp)
-                    print(n, " ", m)
+                    # print(n, " ", m)
                     weight_data = [[0 for _ in range(m)] for _ in range(n)]
                     map_data = [[' ' for _ in range(m)] for _ in range(n)]
                     weight_id = 0
@@ -230,14 +240,14 @@ class GameGUI:
                                 weight_data[i][j] = weights[weight_id]
                                 weight_id += 1
 
-                    for j in range(m):
-                        for i in range(n):
-                            print(map_data[i][j], end = ' ')
-                        print()
-                    for j in range(m):
-                        for i in range(n):
-                            print(weight_data[i][j], end = ' ')
-                        print()
+                    # for j in range(m):
+                    #     for i in range(n):
+                    #         print(map_data[i][j], end = ' ')
+                    #     print()
+                    # for j in range(m):
+                    #     for i in range(n):
+                    #         print(weight_data[i][j], end = ' ')
+                    #     print()
 
                     self.current_state = GameState(map_data, weight_data)
                     self.solver = None
@@ -254,10 +264,11 @@ class GameGUI:
         self.is_playing = False
         self.solver = None
         self.total_weight = 0
-        self.weight_var.set("Total Weight: 0")
-        self.solve_button.config(state='normal')
-        self.play_button.config(text="Play", state='disabled')
-        self.next_button.config(state='disabled')
+        self.current_step = 0
+        self.weight_var.set("Total Weight: 0       Step: 0")
+        self.solve_button.config(state = 'normal')
+        self.play_button.config(text = "Play", state = 'disabled')
+        self.next_button.config(state = 'disabled')
 
     def solve_puzzle(self):
         if not self.current_state:
@@ -273,14 +284,14 @@ class GameGUI:
             solved = self.solver.solve_dfs()
 
         if solved:
-            print("Solution found!")
+            # print("Solution found")
             self.is_solved = True
-            self.play_button.config(state='normal')
-            self.next_button.config(state='normal')
-            self.solve_button.config(state='disabled')
+            self.play_button.config(state = 'normal')
+            self.next_button.config(state = 'normal')
+            self.solve_button.config(state = 'disabled')
         else:
-            self.show_error_popup("Cannot solve the puzzle after 10^6 operations.")
-            self.solve_button.config(state='disabled')
+            self.show_error_popup("Cannot solve the puzzle after 1000000 (1e6) operations.")
+            self.solve_button.config(state = 'disabled')
 
     def next_step(self):
         if not self.solver or not self.current_state or not self.is_solved:
@@ -297,15 +308,16 @@ class GameGUI:
                     new_y, new_x = y + dy, x + dx
                     target_cell = self.current_state.get_cell(new_y, new_x)
 
-                    # Update weight
-                    self.total_weight += 1  # Add 1 for movement
+                    # Update total weight and total step
+                    self.total_weight += 1
+                    self.current_step += 1
 
                     if target_cell in ['$', '*']:
                         # Get weight of stone being pushed
                         stone_weight = self.current_state.get_weight(new_y, new_x)
                         self.total_weight += stone_weight
 
-                    self.weight_var.set(f"Total Weight: {self.total_weight}")
+                    self.weight_var.set(f"Total Weight: {self.total_weight}       Step: {self.current_step}")
 
                     # Make the move
                     self.current_state = self.solver.make_move(self.current_state, y, x, dy, dx)
@@ -351,7 +363,6 @@ class GameGUI:
                 x1p, y1p = x1 + padding, y1 + padding
                 x2p, y2p = x2 - padding, y2 - padding
 
-                # Draw the cell/object first
                 if char == '#':
                     self.canvas.create_rectangle(x1, y1, x2, y2, fill = colors['#'], width = 0)
                 elif char in ['$', '*']:
@@ -362,6 +373,15 @@ class GameGUI:
                         self.canvas.create_oval(x1p, y1p, x2p, y2p,
                                             outline = colors['.'],
                                             width = 2)
+                    # Only draw weight for stones
+                    weight = state.get_weight(x, y)
+                    if weight > 0:
+                        text_x = (x1 + x2) / 2
+                        text_y = (y1 + y2) / 2
+                        self.canvas.create_text(text_x, text_y,
+                                            text = str(weight),
+                                            fill = 'white',
+                                            font = ('Helvetica', int(cell_size / 3)))
                 elif char == '@':
                     self.canvas.create_oval(x1p, y1p, x2p, y2p,
                                         fill = colors['@'],
@@ -375,18 +395,6 @@ class GameGUI:
                                         fill = colors['@'],
                                         outline = colors['.'],
                                         width = 3)
-
-                # Draw weight for all positions if not a wall
-                if char != '#':
-                    weight = state.get_weight(x, y)
-                    text_x = (x1 + x2) / 2
-                    text_y = (y1 + y2) / 2
-                    # Use white text for stones, black for other cells
-                    text_color = 'white' if char in ['$', '*'] else 'black'
-                    self.canvas.create_text(text_x, text_y,
-                                        text = str(weight),
-                                        fill = text_color,
-                                        font = ('Helvetica', int(cell_size / 3)))
 
     def toggle_play(self):
         if not self.is_solved:
