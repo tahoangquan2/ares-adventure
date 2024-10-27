@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import PhotoImage
+
 import os
 
 from .GameState import GameState
@@ -46,6 +48,96 @@ class GameGUI:
         self.create_game_display()
         self.create_right_sidebar()
         self.create_controls()
+        
+        # Load images
+        self.initialize_images()
+
+    def initialize_images(self):
+        # Define the base path relative to the current file's directory
+        base_path_wall = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'assets', 'Tiles'))
+        base_path_stone = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'assets', 'Tiles'))
+        base_path_ares = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'assets', 'Tiles', 'Characters'))
+        base_path_switch = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'assets', 'Tiles'))
+        base_path_bgr = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'assets', 'Tiles', 'Backgrounds'))
+        base_path_complete = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'assets', 'Tiles', 'Backgrounds'))
+
+        
+        # Load images using os.path.join for better path handling
+        self.images = {
+            '#': PhotoImage(file=os.path.join(base_path_wall, 'tile_0000.png')),  # Wall image
+            '$': PhotoImage(file=os.path.join(base_path_stone, 'tile_0142.png')),  # Stone image
+            '@': PhotoImage(file=os.path.join(base_path_ares, 'tile_0002.png')),  # Ares image
+            '.': PhotoImage(file=os.path.join(base_path_switch, 'tile_0053.png')),  # Switch image
+            ' ': PhotoImage(file=os.path.join(base_path_bgr, 'tile_0000.png')),   # Empty space image
+            '*': PhotoImage(file=os.path.join(base_path_complete, 'tile_0007.png'))  # Complete image
+        }
+
+    def draw_state(self, state):
+        self.canvas.delete("all")
+
+        if not state.map:
+            return
+
+        # Định nghĩa kích thước ô dựa trên kích thước tile nền
+        tile_size = 24  # Điều chỉnh theo kích thước tile của bạn
+
+        # Lấy kích thước của canvas
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+
+        # Lấy kích thước của bản đồ
+        map_height = len(state.map[0])
+        map_width = len(state.map)
+
+        # Tính toán x_offset và y_offset để căn giữa bản đồ
+        total_map_width = map_width * tile_size
+        total_map_height = map_height * tile_size
+        x_offset = (canvas_width - total_map_width) / 2
+        y_offset = (canvas_height - total_map_height) / 2
+
+        # Bước 1: Vẽ nền cho toàn bộ lưới trước
+        for y in range(map_height):
+            for x in range(map_width):
+                # Tính toán vị trí ô nền
+                x1 = x * tile_size + x_offset
+                y1 = y * tile_size + y_offset
+
+                # Vẽ ô nền (mặc định là hình trống)
+                self.canvas.create_image(
+                    x1 + tile_size / 2, 
+                    y1 + tile_size / 2, 
+                    image=self.images[' '],  # Nền mặc định
+                    anchor='center'
+                )
+
+        # Bước 2: Vẽ các đối tượng lên trên nền
+        for y in range(map_height):
+            for x in range(map_width):
+                char = state.map[x][y]
+                x1 = x * tile_size + x_offset
+                y1 = y * tile_size + y_offset
+
+                # Bỏ qua ô trống vì đã vẽ trong bước trước
+                if char != ' ' and char in self.images:
+                    self.canvas.create_image(
+                        x1 + tile_size / 2, 
+                        y1 + tile_size / 2, 
+                        image=self.images[char],
+                        anchor='center'
+                    )
+
+                # Vẽ trọng lượng cho các viên đá
+                if char in ['$', '*']:
+                    weight = state.get_weight(x, y)
+                    if weight > 0:
+                        text_x = x1 + tile_size / 2
+                        text_y = y1 + tile_size / 2
+                        self.canvas.create_text(
+                            text_x, text_y,
+                            text=str(weight),
+                            fill='white',
+                            font=('Helvetica', int(tile_size / 3))
+                        )
 
     def create_left_sidebar(self):
         sidebar = ttk.Frame(self.main_container, style='Sidebar.TFrame', width=250)
@@ -221,7 +313,7 @@ class GameGUI:
             return
 
         file_num = selection[0] + 1
-        filename = f"input-{file_num:02d}.txt"
+        filename = f"data/maze_inputs/input-{file_num:02d}.txt"
 
         try:
             if os.path.exists(filename):
@@ -330,76 +422,10 @@ class GameGUI:
                     return True
         return False
 
-    def draw_state(self, state):
-        self.canvas.delete("all")
+    
 
-        if not state.map:
-            return
 
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        map_height = len(state.map[0])
-        map_width = len(state.map)
 
-        cell_width = canvas_width / (map_width + 2)
-        cell_height = canvas_height / (map_height + 2)
-        cell_size = min(cell_width, cell_height)
-
-        x_offset = (canvas_width - (map_width * cell_size)) / 2
-        y_offset = (canvas_height - (map_height * cell_size)) / 2
-
-        colors = {
-            '#': '#34495e',  # Wall
-            '$': '#e67e22',  # Stone
-            '@': '#e74c3c',  # Ares
-            '.': '#f1c40f',  # Switch
-            ' ': '#ffffff'   # Empty
-        }
-
-        for y in range(map_height):
-            for x in range(map_width):
-                char = state.map[x][y]
-                x1 = x_offset + x * cell_size
-                y1 = y_offset + y * cell_size
-                x2 = x1 + cell_size
-                y2 = y1 + cell_size
-
-                padding = cell_size * 0.2
-                x1p, y1p = x1 + padding, y1 + padding
-                x2p, y2p = x2 - padding, y2 - padding
-
-                if char == '#':
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill = colors['#'], width = 0)
-                elif char in ['$', '*']:
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p,
-                                        fill = colors['$'],
-                                        width = 0)
-                    if char == '*':
-                        self.canvas.create_oval(x1p, y1p, x2p, y2p,
-                                            outline = colors['.'],
-                                            width = 2)
-                    # Only draw weight for stones
-                    weight = state.get_weight(x, y)
-                    if weight > 0:
-                        text_x = (x1 + x2) / 2
-                        text_y = (y1 + y2) / 2
-                        self.canvas.create_text(text_x, text_y,
-                                            text = str(weight),
-                                            fill = 'white',
-                                            font = ('Helvetica', int(cell_size / 3)))
-                elif char == '@':
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p,
-                                        fill = colors['@'],
-                                        width = 0)
-                elif char == '.':
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p,
-                                        fill = colors['.'],
-                                        width = 0)
-                elif char == '+':
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p,
-                                        fill = colors['@'],
-                                        outline = colors['.'],
-                                        width = 3)
 
     def toggle_play(self):
         if not self.is_solved:
