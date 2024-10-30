@@ -81,3 +81,20 @@ class GameState:
             return False
 
         return True
+
+    # for heuristic calculation
+    def get_boxes(self):
+        boxes = []
+        for x in range(self.width):
+            for y in range(self.height):
+                if self.map[x][y] in ['$', '*']:  # '$' for box, '*' for box on switch
+                    boxes.append((x, y))
+        return boxes
+    
+    def get_goals(self):
+        goals = []
+        for x in range(self.width):
+            for y in range(self.height):
+                if self.map[x][y] in ['.', '*', '+']:  # '.' for goal, '*' for box on goal, '+' for player on goal
+                    goals.append((x, y))
+        return goals

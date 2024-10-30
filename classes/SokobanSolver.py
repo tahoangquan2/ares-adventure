@@ -209,25 +209,22 @@ class SokobanSolver:
                     index += 1
                     heappush(priority_queue, (new_f, new_g, index, new_state, path + [(dx, dy)]))
 
+
         return False  # Operation limit exceeded or no solution found
 
     def heuristic(self, state):
         box_positions = state.get_boxes()
         goal_positions = state.get_goals()
-        player_pos = state.find_player()
 
-        # Calculate Manhattan distance for each box to its closest goal
+        # Calculate Manhattan distance for each box to its closest goal, factoring in weights
         box_goal_distance = sum(
-            min(abs(box[0] - goal[0]) + abs(box[1] - goal[1]) for goal in goal_positions)
-            for box in box_positions
+            min((abs(box[0] - goal[0]) + abs(box[1] - goal[1])) * state.get_weight(box[0], box[1]) for goal in goal_positions)
+            for box_index, box in enumerate(box_positions)
         )
 
-        # Calculate Manhattan distance from the player to the closest box
-        player_box_distance = min(
-            abs(player_pos[0] - box[0]) + abs(player_pos[1] - box[1])
-            for box in box_positions
-        )
+        return box_goal_distance
 
-        # Combine both distances as the heuristic value
-        return box_goal_distance + player_box_distance
 
+
+    
+    

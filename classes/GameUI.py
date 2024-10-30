@@ -201,7 +201,7 @@ class GameGUI:
         )
 
         # Add algorithms to listbox
-        algorithms = [" Breadth-First Search", " Depth-First Search", " Uniform Cost Search"]
+        algorithms = [" Breadth-First Search", " Depth-First Search", " Uniform Cost Search", " A* Search"]
         for alg in algorithms:
             self.algorithm_listbox.insert(tk.END, alg)
 
@@ -216,7 +216,7 @@ class GameGUI:
         selection = self.algorithm_listbox.curselection()
         if selection:
             # Map selection to algorithm value
-            alg_map = {0: "bfs", 1: "dfs", 2: "ucs"}
+            alg_map = {0: "bfs", 1: "dfs", 2: "ucs", 3: "a_star"}
             prev_algorithm = self.selected_algorithm.get()
             new_algorithm = alg_map[selection[0]]
 
@@ -303,11 +303,9 @@ class GameGUI:
 
     def load_input_file(self, event):
         selection = self.input_listbox.curselection()
-        # print(self.new_slection, self.old_selection, selection)
         if self.new_slection == True:
             selection = self.old_selection
         self.old_selection = selection
-        # print(self.new_slection, self.old_selection, selection)
 
         if not selection:
             return
@@ -315,45 +313,42 @@ class GameGUI:
         file_num = selection[0] + 1
         filename = f"data/maze_inputs/input-{file_num:02d}.txt"
 
+        if not os.path.exists(filename):
+            print(f"File {filename} not found")
+            return
+
         try:
-            if os.path.exists(filename):
-                with open(filename, 'r') as file:
-                    weights = list(map(int, file.readline().rstrip('\n').split()))
-                    map_temp = []
-                    for line in file:
-                        map_temp.append(list(line.rstrip('\n')))
+            with open(filename, 'r') as file:
+                weights = list(map(int, file.readline().strip().split()))
+                map_temp = [list(line.strip()) for line in file]
 
-                    n = len(map_temp[0])
-                    m = len(map_temp)
-                    # print(n, " ", m)
-                    weight_data = [[0 for _ in range(m)] for _ in range(n)]
-                    map_data = [[' ' for _ in range(m)] for _ in range(n)]
-                    weight_id = 0
+            n = len(map_temp[0])
+            m = len(map_temp)
+            weight_data = [[0] * m for _ in range(n)]
+            map_data = [[' '] * m for _ in range(n)]
+            weight_id = 0
 
-                    for j in range(m):
-                        for i in range(n):
-                            map_data[i][j] = map_temp[j][i]
-                            if map_temp[j][i] in ['$', '*']:
-                                weight_data[i][j] = weights[weight_id]
-                                weight_id += 1
+            for j in range(m):
+                for i in range(n):
+                    map_data[i][j] = map_temp[j][i]
+                    if map_temp[j][i] in ['$', '*']:
+                        if weight_id < len(weights):
+                            weight_data[i][j] = weights[weight_id]
+                            weight_id += 1
 
-                    # for j in range(m):
-                    #     for i in range(n):
-                    #         print(map_data[i][j], end = ' ')
-                    #     print()
-                    # for j in range(m):
-                    #     for i in range(n):
-                    #         print(weight_data[i][j], end = ' ')
-                    #     print()
+            if weight_id != len(weights):
+                print("Mismatch between weights count and stones count.")
+                return
 
-                    self.current_state = GameState(map_data, weight_data)
-                    self.solver = None
-                    self.draw_state(self.current_state)
-            else:
-                print(f"File {filename} not found")
+            self.current_state = GameState(map_data, weight_data)
+            self.solver = None
+            self.draw_state(self.current_state)
+
         except Exception as e:
-            print(f"Error loading file: {e}")
+            print(f"Error loading file {filename}: {e}")
+
         self.reset_solve_state()
+
 
     # Reset the solve state when algorithm or input changes
     def reset_solve_state(self):
@@ -381,6 +376,8 @@ class GameGUI:
             solved = self.solver.solve_dfs()
         elif algorithm == "ucs":
             solved = self.solver.solve_ucs()
+        elif algorithm == "a_star":
+            solved = self.solver.solve_a_star()
 
         if solved:
             # print("Solution found")
