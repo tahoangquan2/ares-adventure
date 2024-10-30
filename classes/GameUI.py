@@ -20,7 +20,7 @@ class GameGUI:
         self.is_solved = False
         self.current_step = 0
         self.weight_var = tk.StringVar(value="Total Weight: 0       Step: 0")
-        self.play_speed = 200  # milliseconds between moves
+        self.play_speed = 50  # milliseconds between moves
         self.old_selection = None # Store old selection when changing algorithm
         self.new_slection = False # Check if new selection is made
 
@@ -201,7 +201,7 @@ class GameGUI:
         )
 
         # Add algorithms to listbox
-        algorithms = [" Breadth-First Search", " Depth-First Search"]
+        algorithms = [" Breadth-First Search", " Depth-First Search", " Uniform Cost Search"]
         for alg in algorithms:
             self.algorithm_listbox.insert(tk.END, alg)
 
@@ -216,7 +216,7 @@ class GameGUI:
         selection = self.algorithm_listbox.curselection()
         if selection:
             # Map selection to algorithm value
-            alg_map = {0: "bfs", 1: "dfs"}
+            alg_map = {0: "bfs", 1: "dfs", 2: "ucs"}
             prev_algorithm = self.selected_algorithm.get()
             new_algorithm = alg_map[selection[0]]
 
@@ -379,6 +379,8 @@ class GameGUI:
             solved = self.solver.solve_bfs()
         elif algorithm == "dfs":
             solved = self.solver.solve_dfs()
+        elif algorithm == "ucs":
+            solved = self.solver.solve_ucs()
 
         if solved:
             # print("Solution found")

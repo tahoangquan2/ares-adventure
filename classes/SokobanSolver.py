@@ -1,4 +1,5 @@
 from collections import deque
+from heapq import heappop, heappush
 
 class SokobanSolver:
     def __init__(self, initial_state):
@@ -49,6 +50,16 @@ class SokobanSolver:
         new_map[new_x][new_y] = '+' if target_has_switch else '@'
 
         return state.create_new_state(new_map, stone_move)
+
+    def get_next_step(self):
+        if not self.solution:
+            return None
+
+        self.current_step += 1
+        if self.current_step >= len(self.solution):
+            return None
+
+        return self.solution[self.current_step]
 
     def solve_bfs(self):
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -121,12 +132,102 @@ class SokobanSolver:
 
         return False # Operation limit exceeded or no solution found
 
-    def get_next_step(self):
-        if not self.solution:
-            return None
+ 
+    def solve_ucs(self):
+        # Directions for up, down, left, right movements
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        # Priority queue with initial state (cost, index, state, path)
+        priority_queue = [(0, 0, self.initial_state, [])]
+        visited = set()
+        operations = 0
+        index = 0  # Tie-breaker index for heapq
 
-        self.current_step += 1
-        if self.current_step >= len(self.solution):
-            return None
+        while priority_queue and operations < self.operation_limit:
+            operations += 1
+            cost, _, current_state, path = heappop(priority_queue)
+            state_string = current_state.to_string()
 
-        return self.solution[self.current_step]
+            if current_state.is_solved():
+                self.solution = path
+                self.current_step = -1
+                return True
+
+            if state_string in visited:
+                continue
+
+            visited.add(state_string)
+            player_pos = current_state.find_player()
+
+            if not player_pos:
+                continue
+
+            x, y = player_pos
+            for dx, dy in directions:
+                if self.can_move(current_state, x, y, dx, dy):
+                    new_state = self.make_move(current_state, x, y, dx, dy)
+                    index += 1
+                    heappush(priority_queue, (cost + 1, index, new_state, path + [(dx, dy)]))
+
+        return False  # Operation limit exceeded or no solution found
+    
+    
+
+    def solve_a_star(self):
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        # Priority queue with initial state (f(n), g(n), index, state, path)
+        priority_queue = [(0, 0, 0, self.initial_state, [])]
+        visited = set()
+        operations = 0
+        index = 0  # Tie-breaker index for heapq
+
+        while priority_queue and operations < self.operation_limit:
+            operations += 1
+            f, g, _, current_state, path = heappop(priority_queue)
+            state_string = current_state.to_string()
+
+            if current_state.is_solved():
+                self.solution = path
+                self.current_step = -1
+                return True
+
+            if state_string in visited:
+                continue
+
+            visited.add(state_string)
+            player_pos = current_state.find_player()
+
+            if not player_pos:
+                continue
+
+            x, y = player_pos
+            for dx, dy in directions:
+                if self.can_move(current_state, x, y, dx, dy):
+                    new_state = self.make_move(current_state, x, y, dx, dy)
+                    new_g = g + 1  # Incremental cost for the move
+                    new_h = self.heuristic(new_state)  # Heuristic estimate to goal
+                    new_f = new_g + new_h  # Total estimated cost
+                    index += 1
+                    heappush(priority_queue, (new_f, new_g, index, new_state, path + [(dx, dy)]))
+
+        return False  # Operation limit exceeded or no solution found
+
+    def heuristic(self, state):
+        box_positions = state.get_boxes()
+        goal_positions = state.get_goals()
+        player_pos = state.find_player()
+
+        # Calculate Manhattan distance for each box to its closest goal
+        box_goal_distance = sum(
+            min(abs(box[0] - goal[0]) + abs(box[1] - goal[1]) for goal in goal_positions)
+            for box in box_positions
+        )
+
+        # Calculate Manhattan distance from the player to the closest box
+        player_box_distance = min(
+            abs(player_pos[0] - box[0]) + abs(player_pos[1] - box[1])
+            for box in box_positions
+        )
+
+        # Combine both distances as the heuristic value
+        return box_goal_distance + player_box_distance
+
