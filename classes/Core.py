@@ -65,11 +65,17 @@ class Core:
 
     def on_level_change(self):
         level = self.gui.selected_level.get()
+        self.reset_full_state()
         self.load_level(level)
 
     def on_algorithm_change(self):
-        if self.current_state:
-            self.reset_solve_state()
+        # First stop any ongoing playback
+        self.stop_playback()
+        # Then reset the solver state
+        self.reset_full_state()
+        # Redraw the initial state
+        level = self.gui.selected_level.get()
+        self.load_level(level)
 
     def show_error_popup(self, message):
         popup = tk.Toplevel(self.gui.root)
@@ -105,15 +111,32 @@ class Core:
             self.gui.solve_button.config(state='disabled')
 
     def reset_solve_state(self):
-            self.is_solved = False
+        # Stop any ongoing playback
+        self.is_playing = False
+        self.is_solved = False
+        self.solver = None
+        self.current_step = 0
+        self.total_weight = 0
+
+        # Reset UI elements
+        self.gui.weight_var.set("Total Weight: 0       Step: 0")
+        self.gui.solve_button.config(state='normal')
+        self.gui.play_button.config(text="Play", state='disabled')
+        self.gui.next_button.config(state='disabled')
+
+    # Reset all state variables including game state
+    def reset_full_state(self):
+        self.current_state = None
+        self.reset_solve_state()
+
+    def stop_playback(self):
+        if self.is_playing:
             self.is_playing = False
-            self.solver = None
-            self.total_weight = 0
-            self.current_step = 0
-            self.gui.weight_var.set("Total Weight: 0       Step: 0")
-            self.gui.solve_button.config(state='normal')
-            self.gui.play_button.config(text="Play", state='disabled')
-            self.gui.next_button.config(state='disabled')
+            self.gui.play_button.config(text="Play")
+            self.gui.next_button.config(state='normal')
+            # Cancel any pending auto_play calls
+            if hasattr(self, '_after_id'):
+                self.gui.root.after_cancel(self._after_id)
 
     # Execute the next step in the solution
     def next_step(self):
@@ -166,12 +189,11 @@ class Core:
         if self.is_playing:
             has_next = self.next_step()
             if has_next:
-                self.gui.root.after(self.play_speed, self.auto_play)
+                # Store the after ID so we can cancel it if needed
+                self._after_id = self.gui.root.after(self.play_speed, self.auto_play)
             else:
                 # No more steps then stop playing
-                self.is_playing = False
-                self.gui.play_button.config(text="Play")
-                self.gui.next_button.config(state='normal')
+                self.stop_playback()
 
     def update_display(self, event=None):
         if self.current_state:
