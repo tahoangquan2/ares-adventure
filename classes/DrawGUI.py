@@ -5,9 +5,21 @@ class DrawGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Ares Stone Game")
+
+        # Initialize variables before setup
+        self.selected_level = tk.StringVar()
+        self.selected_algorithm = tk.StringVar()
+        self.weight_var = tk.StringVar(value="Total Weight: 0       Step: 0")
+
+        # Create GUI elements
         self.setup_styles()
         self.setup_window()
         self.create_gui_elements()
+
+        # Set default algorithm to BFS
+        self.selected_algorithm.set("bfs")
+        # Set default level to 1
+        self.selected_level.set("1")
 
     def setup_styles(self):
         style = ttk.Style()
@@ -18,6 +30,16 @@ class DrawGUI:
         style.configure('Modern.TButton', padding=10, font=('Helvetica', 10))
         style.configure('Modern.TLabel', background='#2c3e50', foreground='white', font=('Helvetica', 11))
         style.configure('Controls.TLabel', background='#ecf0f1', font=('Helvetica', 12))
+
+        # New radio button styles
+        style.configure('Sidebar.TRadiobutton',
+                       background='#34495e',
+                       foreground='white',
+                       font=('Helvetica', 11),
+                       padding=5)
+        style.map('Sidebar.TRadiobutton',
+                 background=[('selected', '#3498db'), ('active', '#2980b9')],
+                 foreground=[('selected', 'white'), ('active', 'white')])
 
     def setup_window(self):
         self.root.geometry("1280x720")
@@ -39,29 +61,39 @@ class DrawGUI:
         title_label = ttk.Label(sidebar, text="Level Selection", style='Modern.TLabel', font=('Helvetica', 14, 'bold'))
         title_label.pack(pady=(20, 10), padx=10)
 
-        list_container = ttk.Frame(sidebar, style='Sidebar.TFrame')
-        list_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 20))
+        levels_container = ttk.Frame(sidebar, style='Sidebar.TFrame')
+        levels_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 20))
 
-        self.input_listbox = tk.Listbox(
-            list_container,
-            font=('Helvetica', 11),
-            bg='#34495e',
-            fg='white',
-            selectmode=tk.SINGLE,
-            relief=tk.FLAT,
-            highlightthickness=0,
-            selectbackground='#3498db',
-            selectforeground='white',
-            borderwidth=0
+        # Create scrollable frame for levels
+        canvas = tk.Canvas(levels_container, bg='#34495e', highlightthickness=0)
+        scrollbar = ttk.Scrollbar(levels_container, orient=tk.VERTICAL, command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas, style='Sidebar.TFrame')
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
-        scrollbar = ttk.Scrollbar(list_container, orient=tk.VERTICAL, command=self.input_listbox.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.input_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.input_listbox.config(yscrollcommand=scrollbar.set)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=220)
+        canvas.configure(yscrollcommand=scrollbar.set)
 
+        # Add radio buttons for levels
         for i in range(1, 11):
-            self.input_listbox.insert(tk.END, f" Level {i:02d}")
+            level_radio = ttk.Radiobutton(
+                scrollable_frame,
+                text=f"Level {i:02d}",
+                value=str(i),
+                variable=self.selected_level,
+                style='Sidebar.TRadiobutton'
+            )
+            level_radio.pack(fill=tk.X, pady=2)
+
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Configure canvas scrolling
+        canvas.bind('<Enter>', lambda e: canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(-1*(e.delta//120), "units")))
+        canvas.bind('<Leave>', lambda e: canvas.unbind_all("<MouseWheel>"))
 
     def create_game_display(self):
         game_frame = ttk.Frame(self.main_container, style='Game.TFrame')
@@ -81,29 +113,23 @@ class DrawGUI:
         title_label = ttk.Label(sidebar, text="Algorithm Selection", style='Modern.TLabel', font=('Helvetica', 14, 'bold'))
         title_label.pack(pady=(20, 10), padx=10)
 
-        list_container = ttk.Frame(sidebar, style='Sidebar.TFrame')
-        list_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 20))
+        alg_container = ttk.Frame(sidebar, style='Sidebar.TFrame')
+        alg_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 20))
 
-        self.algorithm_listbox = tk.Listbox(
-            list_container,
-            font=('Helvetica', 11),
-            bg='#34495e',
-            fg='white',
-            selectmode=tk.SINGLE,
-            relief=tk.FLAT,
-            highlightthickness=0,
-            selectbackground='#3498db',
-            selectforeground='white',
-            borderwidth=0,
-            height=2
-        )
+        algorithms = [
+            ("Breadth-First Search", "bfs"),
+            ("Depth-First Search", "dfs")
+        ]
 
-        algorithms = [" Breadth-First Search", " Depth-First Search"]
-        for alg in algorithms:
-            self.algorithm_listbox.insert(tk.END, alg)
-
-        self.algorithm_listbox.select_set(0)
-        self.algorithm_listbox.pack(fill=tk.BOTH, expand=True)
+        for text, value in algorithms:
+            alg_radio = ttk.Radiobutton(
+                alg_container,
+                text=text,
+                value=value,
+                variable=self.selected_algorithm,
+                style='Sidebar.TRadiobutton'
+            )
+            alg_radio.pack(fill=tk.X, pady=2)
 
     def create_controls(self):
         controls = ttk.Frame(self.root, style='Controls.TFrame')
@@ -135,7 +161,6 @@ class DrawGUI:
                                     state='disabled')
         self.next_button.pack(side=tk.LEFT, padx=5)
 
-        self.weight_var = tk.StringVar(value="Total Weight: 0       Step: 0")
         weight_label = ttk.Label(control_container,
                                textvariable=self.weight_var,
                                font=('Helvetica', 12),
