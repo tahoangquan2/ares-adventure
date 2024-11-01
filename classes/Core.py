@@ -4,6 +4,8 @@ from tkinter import ttk
 from .GameState import GameState
 from .algorithms.BFS import BFSSolver
 from .algorithms.DFS import DFSSolver
+from .algorithms.UCS import UCSSolver
+from .algorithms.A_Star import AStarSolver
 
 class Core:
     def __init__(self, gui):
@@ -98,9 +100,13 @@ class Core:
 
         if self.gui.selected_algorithm.get() == "bfs":
             self.solver = BFSSolver(self.current_state)
-        else:
+        elif self.gui.selected_algorithm.get() == "dfs":
             self.solver = DFSSolver(self.current_state)
-
+        elif self.gui.selected_algorithm.get() == "ucs":
+            self.solver = UCSSolver(self.current_state)
+        else:
+            self.solver = AStarSolver(self.current_state)
+ 
         if self.solver.solve():
             self.is_solved = True
             self.gui.play_button.config(state='normal')
