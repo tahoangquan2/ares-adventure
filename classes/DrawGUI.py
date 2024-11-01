@@ -118,7 +118,9 @@ class DrawGUI:
 
         algorithms = [
             ("Breadth-First Search", "bfs"),
-            ("Depth-First Search", "dfs")
+            ("Depth-First Search", "dfs"),
+            ("Uniform Cost Search", "ucs"),
+            ("A* Search with heuristic", "a_star")
         ]
 
         for text, value in algorithms:
