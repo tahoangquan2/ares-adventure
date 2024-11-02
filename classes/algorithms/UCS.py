@@ -9,6 +9,7 @@ class UCSSolver:
         self.current_step = -1
         self.operation_limit = 10**6
         self.character_move = CharacterMove()
+        self.node_count = 0  # Khai báo node_count ở đây
 
     def solve(self):
         # Directions for up, down, left, right movements
@@ -44,6 +45,7 @@ class UCSSolver:
                     new_state = self.make_move(current_state, x, y, dx, dy)
                     index += 1
                     heappush(priority_queue, (cost + 1, index, new_state, path + [(dx, dy)]))
+                    self.node_count += 1  # Tăng node_count mỗi khi thêm một trạng thái mới
 
         return False  # Operation limit exceeded or no solution found
 

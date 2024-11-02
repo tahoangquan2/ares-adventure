@@ -9,6 +9,7 @@ class AStarSolver:
         self.current_step = -1
         self.operation_limit = 10**6
         self.character_move = CharacterMove()
+        self.node_count = 0  # Đảm bảo khai báo node_count ở đây
 
     def solve(self):
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -46,7 +47,7 @@ class AStarSolver:
                     new_f = new_g + new_h  # Total estimated cost
                     index += 1
                     heappush(priority_queue, (new_f, new_g, index, new_state, path + [(dx, dy)]))
-
+                    self.node_count += 1  # Tăng node_count mỗi khi thêm một trạng thái mới
 
         return False  # Operation limit exceeded or no solution found
 

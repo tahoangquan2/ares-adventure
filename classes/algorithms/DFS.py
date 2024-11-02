@@ -7,6 +7,7 @@ class DFSSolver:
         self.current_step = -1
         self.operation_limit = 10**6
         self.character_move = CharacterMove()
+        self.node_count = 0
 
     def solve(self):
         # right, down, left, up
@@ -46,6 +47,7 @@ class DFSSolver:
                     # Only add to stack if we haven't found this state yet or if this path is shorter
                     if new_state_string not in state_paths or len(path) + 1 < len(state_paths[new_state_string]):
                         stack.append((new_state, path + [(dx, dy)]))
+                        self.node_count += 1
 
         # Operation limit exceeded or no solution found
         return False

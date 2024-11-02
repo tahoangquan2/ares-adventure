@@ -6,7 +6,8 @@ from .algorithms.BFS import BFSSolver
 from .algorithms.DFS import DFSSolver
 from .algorithms.UCS import UCSSolver
 from .algorithms.A_Star import AStarSolver
-
+import time  
+import tracemalloc 
 class Core:
     def __init__(self, gui):
         self.gui = gui
@@ -92,12 +93,13 @@ class Core:
         msg_label.pack(expand=True, pady=10)
 
         ok_button = ttk.Button(popup, text="OK", command=popup.destroy)
-        ok_button.pack(pady=(0, 10))
-
+        ok_button.pack(pady=(0, 10))        
     def solve_puzzle(self):
+        # Kiểm tra nếu trạng thái hiện tại không tồn tại
         if not self.current_state:
             return
 
+        # Chọn thuật toán tìm kiếm dựa trên lựa chọn của người dùng
         if self.gui.selected_algorithm.get() == "bfs":
             self.solver = BFSSolver(self.current_state)
         elif self.gui.selected_algorithm.get() == "dfs":
@@ -106,15 +108,49 @@ class Core:
             self.solver = UCSSolver(self.current_state)
         else:
             self.solver = AStarSolver(self.current_state)
- 
+        
+        # Bắt đầu đo thời gian và theo dõi bộ nhớ
+        start_time = time.time()
+        tracemalloc.start()
+
+        # Thực hiện giải thuật
         if self.solver.solve():
+            # Dừng đo thời gian và theo dõi bộ nhớ
+            time_taken = (time.time() - start_time) * 1000  # Chuyển sang milliseconds
+            current, peak = tracemalloc.get_traced_memory()
+            memory_used = peak / (1024 * 1024)  # Chuyển sang MB
+            tracemalloc.stop()
+
+            # Thu thập thông tin để ghi vào output
+            algorithm_name = self.gui.selected_algorithm.get().upper()
+            steps = len(self.solver.solution)  # Tổng số bước (dựa vào độ dài của chuỗi hành động)
+            total_weight = self.total_weight  # Tổng trọng lượng đã đẩy
+            node_count = self.solver.node_count  # Số lượng node đã sinh ra
+            solution_path = [f"{move}" for move in self.solver.solution]  # Chuỗi hành động
+
+            # Gọi hàm lưu output
+            self.save_output(algorithm_name, steps, total_weight, node_count, time_taken, memory_used, solution_path)
+
+            # Cập nhật trạng thái GUI
             self.is_solved = True
             self.gui.play_button.config(state='normal')
             self.gui.next_button.config(state='normal')
             self.gui.solve_button.config(state='disabled')
         else:
+            # Nếu không tìm được giải pháp trong giới hạn phép toán
             self.show_error_popup("Cannot solve the puzzle after 1000000 (1e6) operations.")
             self.gui.solve_button.config(state='disabled')
+
+    # Hàm lưu output
+    def save_output(self, algorithm_name, steps, total_weight, node_count, time_taken, memory_used, solution_path):
+        # Đặt tên tệp đầu ra theo cấp độ hiện tại
+        output_filename = f"output-{self.gui.selected_level.get()}.txt"
+        
+        # Ghi dữ liệu vào tệp
+        with open(output_filename, 'w') as f:
+            f.write(f"{algorithm_name}\n")
+            f.write(f"Steps: {steps}, Weight: {total_weight}, Nodes: {node_count}, Time (ms): {time_taken:.2f}, Memory (MB): {memory_used:.2f}\n")
+            f.write(''.join(solution_path))
 
     def reset_solve_state(self):
         # Stop any ongoing playback
@@ -200,7 +236,6 @@ class Core:
             else:
                 # No more steps then stop playing
                 self.stop_playback()
-
     def update_display(self, event=None):
         if self.current_state:
             self.gui.draw_state(self.current_state)
