@@ -6,8 +6,9 @@ from .algorithms.BFS import BFSSolver
 from .algorithms.DFS import DFSSolver
 from .algorithms.UCS import UCSSolver
 from .algorithms.A_Star import AStarSolver
-import time  
-import tracemalloc 
+import time
+import tracemalloc
+
 class Core:
     def __init__(self, gui):
         self.gui = gui
@@ -17,15 +18,12 @@ class Core:
         self.is_solved = False
         self.current_step = 0
         self.total_weight = 0
-        self.play_speed = 200 # ms
+        self.play_speed = 200  # ms
 
         self.setup_bindings()
-
-        # Initial load of level 1
         self.load_level("1")
 
     def setup_bindings(self):
-        # Bind to StringVar changes
         self.gui.selected_level.trace_add('write', lambda *args: self.on_level_change())
         self.gui.selected_algorithm.trace_add('write', lambda *args: self.on_algorithm_change())
         self.gui.solve_button.config(command=self.solve_puzzle)
@@ -35,15 +33,11 @@ class Core:
 
     def load_level(self, level_num):
         filename = f"input-{int(level_num):02d}.txt"
-
         try:
             if os.path.exists(filename):
                 with open(filename, 'r') as file:
                     weights = list(map(int, file.readline().rstrip('\n').split()))
-                    map_temp = []
-                    for line in file:
-                        map_temp.append(list(line.rstrip('\n')))
-
+                    map_temp = [list(line.rstrip('\n')) for line in file]
                     n = len(map_temp[0])
                     m = len(map_temp)
                     weight_data = [[0 for _ in range(m)] for _ in range(n)]
@@ -65,7 +59,6 @@ class Core:
             print(f"Error loading file: {e}")
 
         self.reset_solve_state()
-
     def on_level_change(self):
         level = self.gui.selected_level.get()
         self.reset_full_state()
@@ -93,13 +86,12 @@ class Core:
         msg_label.pack(expand=True, pady=10)
 
         ok_button = ttk.Button(popup, text="OK", command=popup.destroy)
-        ok_button.pack(pady=(0, 10))        
+        ok_button.pack(pady=(0, 10))
+
     def solve_puzzle(self):
-        # Kiểm tra nếu trạng thái hiện tại không tồn tại
         if not self.current_state:
             return
 
-        # Chọn thuật toán tìm kiếm dựa trên lựa chọn của người dùng
         if self.gui.selected_algorithm.get() == "bfs":
             self.solver = BFSSolver(self.current_state)
         elif self.gui.selected_algorithm.get() == "dfs":
@@ -108,65 +100,81 @@ class Core:
             self.solver = UCSSolver(self.current_state)
         else:
             self.solver = AStarSolver(self.current_state)
-        
-        # Bắt đầu đo thời gian và theo dõi bộ nhớ
+
         start_time = time.time()
         tracemalloc.start()
 
-        # Thực hiện giải thuật
         if self.solver.solve():
-            # Dừng đo thời gian và theo dõi bộ nhớ
-            time_taken = (time.time() - start_time) * 1000  # Chuyển sang milliseconds
+            time_taken = (time.time() - start_time) * 1000  # Convert to milliseconds
             current, peak = tracemalloc.get_traced_memory()
-            memory_used = peak / (1024 * 1024)  # Chuyển sang MB
+            memory_used = peak / (1024 * 1024)  # Convert to MB
             tracemalloc.stop()
 
-            # Thu thập thông tin để ghi vào output
-            algorithm_name = self.gui.selected_algorithm.get().upper()
-            steps = len(self.solver.solution)  # Tổng số bước (dựa vào độ dài của chuỗi hành động)
-            total_weight = self.total_weight  # Tổng trọng lượng đã đẩy
-            node_count = self.solver.node_count  # Số lượng node đã sinh ra
-            solution_path = [f"{move}" for move in self.solver.solution]  # Chuỗi hành động
-
-            # Gọi hàm lưu output
-            self.save_output(algorithm_name, steps, total_weight, node_count, time_taken, memory_used, solution_path)
-
-            # Cập nhật trạng thái GUI
             self.is_solved = True
+
+            # Đặt self.current_step về 0 để bắt đầu lại từ đầu khi phát
+            #self.current_step = len(self.solver.solution)
+            self.current_step = 0
+            self.total_weight = self.calculate_total_weight()
+            self.gui.weight_var.set(f"Total Weight: {self.total_weight}       Step: {self.current_step}")
+
+            # Chuyển đổi đường đi từ tọa độ sang chuỗi LURD
+            solution_directions = self.convert_moves_to_directions(self.solver.solution)
+
+            # Cập nhật giao diện
+            self.gui.weight_var.set(f"Total Weight: {self.total_weight}       Step: {self.current_step}")
+
+            algorithm_name = self.gui.selected_algorithm.get().upper()
+            node_count = self.solver.node_count
+
+            # Lưu output
+            self.save_output(algorithm_name, self.current_step, self.total_weight, node_count, time_taken, memory_used, solution_directions)
+
             self.gui.play_button.config(state='normal')
             self.gui.next_button.config(state='normal')
             self.gui.solve_button.config(state='disabled')
-        else:
-            # Nếu không tìm được giải pháp trong giới hạn phép toán
-            self.show_error_popup("Cannot solve the puzzle after 1000000 (1e6) operations.")
-            self.gui.solve_button.config(state='disabled')
 
-    # Hàm lưu output
+
+    def calculate_total_weight(self):
+        total_weight = 0
+        for move in self.solver.solution:
+            x, y = move
+            weight = self.current_state.get_weight(x, y)
+            total_weight += weight
+        return total_weight
+
+    def convert_moves_to_directions(self, moves):
+        directions = []
+        for move in moves:
+            if move == (0, -1):
+                directions.append('L')  # Left
+            elif move == (0, 1):
+                directions.append('R')  # Right
+            elif move == (-1, 0):
+                directions.append('U')  # Up
+            elif move == (1, 0):
+                directions.append('D')  # Down
+        return directions
+
+
     def save_output(self, algorithm_name, steps, total_weight, node_count, time_taken, memory_used, solution_path):
-        # Đặt tên tệp đầu ra theo cấp độ hiện tại
         output_filename = f"output-{self.gui.selected_level.get()}.txt"
-        
-        # Ghi dữ liệu vào tệp
         with open(output_filename, 'w') as f:
             f.write(f"{algorithm_name}\n")
             f.write(f"Steps: {steps}, Weight: {total_weight}, Nodes: {node_count}, Time (ms): {time_taken:.2f}, Memory (MB): {memory_used:.2f}\n")
-            f.write(''.join(solution_path))
+            f.write(' '.join(solution_path))
 
     def reset_solve_state(self):
-        # Stop any ongoing playback
         self.is_playing = False
         self.is_solved = False
         self.solver = None
         self.current_step = 0
         self.total_weight = 0
-
-        # Reset UI elements
         self.gui.weight_var.set("Total Weight: 0       Step: 0")
         self.gui.solve_button.config(state='normal')
         self.gui.play_button.config(text="Play", state='disabled')
         self.gui.next_button.config(state='disabled')
 
-    # Reset all state variables including game state
     def reset_full_state(self):
         self.current_state = None
         self.reset_solve_state()
@@ -176,11 +184,9 @@ class Core:
             self.is_playing = False
             self.gui.play_button.config(text="Play")
             self.gui.next_button.config(state='normal')
-            # Cancel any pending auto_play calls
             if hasattr(self, '_after_id'):
                 self.gui.root.after_cancel(self._after_id)
 
-    # Execute the next step in the solution
     def next_step(self):
         if not self.solver or not self.current_state or not self.is_solved:
             return False
@@ -192,28 +198,23 @@ class Core:
             if player_pos:
                 y, x = player_pos
                 if self.solver.can_move(self.current_state, y, x, dy, dx):
-                    # Check if moving stone
                     new_y, new_x = y + dy, x + dx
                     target_cell = self.current_state.get_cell(new_y, new_x)
 
-                    # Update total weight and total step
                     self.total_weight += 1
                     self.current_step += 1
 
                     if target_cell in ['$', '*']:
-                        # Get weight of stone being pushed
                         stone_weight = self.current_state.get_weight(new_y, new_x)
                         self.total_weight += stone_weight
 
                     self.gui.weight_var.set(f"Total Weight: {self.total_weight}       Step: {self.current_step}")
-
-                    # Make the move
+                    
                     self.current_state = self.solver.make_move(self.current_state, y, x, dy, dx)
                     self.gui.draw_state(self.current_state)
                     return True
         return False
 
-    # Toggle between play and pause states
     def toggle_play(self):
         if not self.is_solved:
             return
@@ -231,11 +232,10 @@ class Core:
         if self.is_playing:
             has_next = self.next_step()
             if has_next:
-                # Store the after ID so we can cancel it if needed
                 self._after_id = self.gui.root.after(self.play_speed, self.auto_play)
             else:
-                # No more steps then stop playing
                 self.stop_playback()
+
     def update_display(self, event=None):
         if self.current_state:
             self.gui.draw_state(self.current_state)

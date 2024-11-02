@@ -164,10 +164,11 @@ class DrawGUI:
         self.next_button.pack(side=tk.LEFT, padx=5)
 
         weight_label = ttk.Label(control_container,
-                               textvariable=self.weight_var,
-                               font=('Helvetica', 12),
-                               style='Controls.TLabel')
+                         textvariable=self.weight_var,
+                         font=('Helvetica', 12),
+                         style='Controls.TLabel')
         weight_label.pack(pady=(10, 0))
+
 
     def draw_state(self, state):
         self.canvas.delete("all")
