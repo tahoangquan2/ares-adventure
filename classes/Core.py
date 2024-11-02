@@ -112,54 +112,69 @@ class Core:
 
             self.is_solved = True
 
-            # Đặt self.current_step về 0 để bắt đầu lại từ đầu khi phát
-            #self.current_step = len(self.solver.solution)
-            self.current_step = 0
-            self.total_weight = self.calculate_total_weight()
+            self.current_step = len(self.solver.solution)
+            self.total_weight = self.calculate_total_weight_for_solution(self.solver.solution)
             self.gui.weight_var.set(f"Total Weight: {self.total_weight}       Step: {self.current_step}")
-
-            # Chuyển đổi đường đi từ tọa độ sang chuỗi LURD
             solution_directions = self.convert_moves_to_directions(self.solver.solution)
-
-            # Cập nhật giao diện
-            self.gui.weight_var.set(f"Total Weight: {self.total_weight}       Step: {self.current_step}")
 
             algorithm_name = self.gui.selected_algorithm.get().upper()
             node_count = self.solver.node_count
 
             # Lưu output
             self.save_output(algorithm_name, self.current_step, self.total_weight, node_count, time_taken, memory_used, solution_directions)
-
+            self.current_step = 0
+            self.total_weight = 0
+            self.gui.weight_var.set(f"Total Weight: {self.total_weight}       Step: {self.current_step}")
             self.gui.play_button.config(state='normal')
             self.gui.next_button.config(state='normal')
             self.gui.solve_button.config(state='disabled')
 
 
-    def calculate_total_weight(self):
+    def calculate_total_weight_for_solution(self, solution):
         total_weight = 0
-        for move in self.solver.solution:
-            x, y = move
-            weight = self.current_state.get_weight(x, y)
-            total_weight += weight
+        step_count = 0
+        player_pos = self.current_state.find_player() 
+
+        if not player_pos:
+            return total_weight  
+
+        y, x = player_pos 
+
+        for move in solution:
+            dy, dx = move  
+            new_y, new_x = y + dy, x + dx
+            target_cell = self.current_state.get_cell(new_y, new_x)
+            
+            total_weight += 1  
+            step_count += 1
+
+            if target_cell in ['$', '*']:
+                stone_weight = self.current_state.get_weight(new_y, new_x)
+                total_weight += stone_weight
+            y, x = new_y, new_x
+
         return total_weight
 
     def convert_moves_to_directions(self, moves):
         directions = []
         for move in moves:
             if move == (0, -1):
-                directions.append('L')  # Left
+                directions.append('U') 
             elif move == (0, 1):
-                directions.append('R')  # Right
+                directions.append('D') 
             elif move == (-1, 0):
-                directions.append('U')  # Up
+                directions.append('L') 
             elif move == (1, 0):
-                directions.append('D')  # Down
+                directions.append('R')  
         return directions
 
 
     def save_output(self, algorithm_name, steps, total_weight, node_count, time_taken, memory_used, solution_path):
         output_filename = f"output-{self.gui.selected_level.get()}.txt"
-        with open(output_filename, 'w') as f:
+        if os.path.exists(output_filename) and os.path.getsize(output_filename) > 0:
+            with open(output_filename, 'a') as f:
+                f.write('\n')
+        with open(output_filename, 'a') as f:
             f.write(f"{algorithm_name}\n")
             f.write(f"Steps: {steps}, Weight: {total_weight}, Nodes: {node_count}, Time (ms): {time_taken:.2f}, Memory (MB): {memory_used:.2f}\n")
             f.write(' '.join(solution_path))

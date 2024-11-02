@@ -9,7 +9,7 @@ class AStarSolver:
         self.current_step = -1
         self.operation_limit = 10**6
         self.character_move = CharacterMove()
-        self.node_count = 0  # Đảm bảo khai báo node_count ở đây
+        self.node_count = 0  
 
     def solve(self):
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]

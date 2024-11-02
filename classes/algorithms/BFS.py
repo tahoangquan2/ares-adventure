@@ -8,7 +8,7 @@ class BFSSolver:
         self.current_step = -1
         self.operation_limit = 10**6
         self.character_move = CharacterMove()
-        self.node_count = 0  # Đảm bảo khai báo node_count ở đây
+        self.node_count = 0  
 
     def solve(self):
         # right, down, left, up

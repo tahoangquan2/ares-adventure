@@ -10,6 +10,11 @@ class GameState:
             return self.weight[x][y]
         return 0
 
+    def clone(self):
+        new_map = [row[:] for row in self.map]  
+        new_weight = [row[:] for row in self.weight]  
+        return GameState(new_map, new_weight)
+
     def find_player(self):
         for y in range(self.height):
             for x in range(self.width):
@@ -46,16 +51,10 @@ class GameState:
     def to_string(self):
         return '\n'.join(''.join(row) for row in self.map)
 
-    def create_new_state(self, new_map, stone_move = None):
-        new_state = GameState(new_map, [])
-        new_state.weight = [[0 for _ in range(self.height)] for _ in range(self.width)]
+    def create_new_state(self, new_map, stone_move=None):
+        new_weight = [row[:] for row in self.weight]  
+        new_state = GameState(new_map, new_weight) 
 
-        # Copy all weights first
-        for i in range(self.width):
-            for j in range(self.height):
-                new_state.weight[i][j] = self.weight[i][j]
-
-        # If a stone was moved, update its position in weight map
         if stone_move:
             (old_x, old_y), (new_x, new_y) = stone_move
             new_state.weight[new_x][new_y] = self.weight[old_x][old_y]
