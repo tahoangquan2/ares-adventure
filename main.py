@@ -54,13 +54,23 @@ class MenuScreen:
     def quit_app(self):
         self.root.quit()
 
+gui_instance = None
+
 def switch_to_search(root, menu_screen):
+    global gui_instance
+    
     # Hide the menu screen
     menu_screen.hide()
 
-    # Initialize the GUI and core game logic
-    gui = DrawGUI(root)
-    core = Core(gui)    
+    if gui_instance is None:
+        # Initialize the GUI and core game logic only once
+        gui_instance = DrawGUI(root)
+        gui_instance.menu_screen = menu_screen  # Thêm tham chiếu đến menu_screen
+        core = Core(gui_instance)
+    else:
+        # Nếu đã tồn tại, chỉ cần hiển thị lại
+        gui_instance.main_container.pack(expand=True, fill='both')
+   
 
 def main():
     root = tk.Tk()

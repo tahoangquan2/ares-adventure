@@ -47,7 +47,7 @@ class DrawGUI:
         self.main_container = ttk.Frame(self.root, style='Game.TFrame')
         self.main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-    def create_gui_elements(self):
+    def create_gui_elements(self): 
         self.create_left_sidebar()
         self.create_game_display()
         self.create_right_sidebar()
@@ -143,10 +143,18 @@ class DrawGUI:
         button_frame = ttk.Frame(control_container, style='Controls.TFrame')
         button_frame.pack()
 
+        # Thêm nút "Back"
+        self.back_button = ttk.Button(button_frame,
+                                    text="Back",
+                                    style='Modern.TButton',
+                                    command=self.on_back_pressed)
+        self.back_button.pack(side=tk.LEFT, padx=5)
+
+        # Các nút điều khiển khác
         self.solve_button = ttk.Button(button_frame,
-                                     text="Solve Puzzle",
-                                     style='Modern.TButton',
-                                     width=15)
+                                    text="Solve Puzzle",
+                                    style='Modern.TButton',
+                                    width=15)
         self.solve_button.pack(side=tk.LEFT, padx=5)
 
         self.play_button = ttk.Button(button_frame,
@@ -164,11 +172,15 @@ class DrawGUI:
         self.next_button.pack(side=tk.LEFT, padx=5)
 
         weight_label = ttk.Label(control_container,
-                         textvariable=self.weight_var,
-                         font=('Helvetica', 12),
-                         style='Controls.TLabel')
+                                textvariable=self.weight_var,
+                                font=('Helvetica', 12),
+                                style='Controls.TLabel')
         weight_label.pack(pady=(10, 0))
 
+    def on_back_pressed(self):
+        if hasattr(self, 'menu_screen'):
+            self.menu_screen.show()
+            self.main_container.pack_forget()  # Ẩn màn hình tìm kiếm
 
     def draw_state(self, state):
         self.canvas.delete("all")
