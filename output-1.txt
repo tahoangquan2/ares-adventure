@@ -25,3 +25,18 @@ U L U L D R R R R R R R R U R D
 BFS
 Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1738.42, Memory (MB): 22.97
 U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1795.26, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1732.81, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1765.41, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1750.20, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1827.60, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D

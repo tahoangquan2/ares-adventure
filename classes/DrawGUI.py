@@ -175,18 +175,17 @@ class DrawGUI:
                                 style='Controls.TLabel')
         weight_label.pack(pady=(10, 0))
 
-    def on_back_pressed(self):
-        # Ẩn main_container để ẩn giao diện tìm kiếm
-        self.main_container.pack_forget()
-        
-        # Ẩn control_container để ẩn các nút điều khiển
-        for widget in self.root.pack_slaves():
-            if isinstance(widget, ttk.Frame) and widget != self.menu_screen.frame:
-                widget.pack_forget()
+    def on_back_pressed(self):  
+        for widget in self.main_container.winfo_children():
+            widget.pack_forget()
 
-        # Hiển thị lại màn hình menu nếu tồn tại
+        self.main_container.pack_forget()
+        for widget in self.root.winfo_children():
+            if isinstance(widget, ttk.Frame) and (not hasattr(widget, 'frame') or widget != self.menu_screen.frame):
+                widget.pack_forget()
         if hasattr(self, 'menu_screen'):
             self.menu_screen.show()
+
 
 
     def draw_state(self, state):
