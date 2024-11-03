@@ -68,9 +68,13 @@ def switch_to_search(root, menu_screen):
         gui_instance.menu_screen = menu_screen  # Thêm tham chiếu đến menu_screen
         core = Core(gui_instance)
     else:
-        # Nếu đã tồn tại, chỉ cần hiển thị lại
-        gui_instance.main_container.pack(expand=True, fill='both')
-   
+        #gui_instance.main_container.pack_forget() 
+       # gui_instance.main_container.pack(expand=True, fill='both')
+        gui_instance = DrawGUI(root)
+        gui_instance.menu_screen = menu_screen 
+        core = Core(gui_instance)
+        #for widget in gui_instance.main_container.winfo_children():
+            #widget.pack_configure() 
 
 def main():
     root = tk.Tk()

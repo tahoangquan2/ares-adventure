@@ -143,14 +143,12 @@ class DrawGUI:
         button_frame = ttk.Frame(control_container, style='Controls.TFrame')
         button_frame.pack()
 
-        # Thêm nút "Back"
         self.back_button = ttk.Button(button_frame,
                                     text="Back",
                                     style='Modern.TButton',
                                     command=self.on_back_pressed)
         self.back_button.pack(side=tk.LEFT, padx=5)
 
-        # Các nút điều khiển khác
         self.solve_button = ttk.Button(button_frame,
                                     text="Solve Puzzle",
                                     style='Modern.TButton',
@@ -178,9 +176,18 @@ class DrawGUI:
         weight_label.pack(pady=(10, 0))
 
     def on_back_pressed(self):
+        # Ẩn main_container để ẩn giao diện tìm kiếm
+        self.main_container.pack_forget()
+        
+        # Ẩn control_container để ẩn các nút điều khiển
+        for widget in self.root.pack_slaves():
+            if isinstance(widget, ttk.Frame) and widget != self.menu_screen.frame:
+                widget.pack_forget()
+
+        # Hiển thị lại màn hình menu nếu tồn tại
         if hasattr(self, 'menu_screen'):
             self.menu_screen.show()
-            self.main_container.pack_forget()  # Ẩn màn hình tìm kiếm
+
 
     def draw_state(self, state):
         self.canvas.delete("all")

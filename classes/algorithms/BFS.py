@@ -41,7 +41,7 @@ class BFSSolver:
                 if self.character_move.can_move(current_state, x, y, dx, dy):
                     new_state = self.character_move.make_move(current_state, x, y, dx, dy)
                     queue.append((new_state, path + [(dx, dy)]))
-                    self.node_count += 1  # Tăng node_count mỗi khi thêm một trạng thái mới
+                    self.node_count += 1  
 
         # Operation limit exceeded or no solution found
         return False

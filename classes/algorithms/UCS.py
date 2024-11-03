@@ -45,7 +45,7 @@ class UCSSolver:
                     new_state = self.make_move(current_state, x, y, dx, dy)
                     index += 1
                     heappush(priority_queue, (cost + 1, index, new_state, path + [(dx, dy)]))
-                    self.node_count += 1  # Tăng node_count mỗi khi thêm một trạng thái mới
+                    self.node_count += 1  
 
         return False  # Operation limit exceeded or no solution found
 

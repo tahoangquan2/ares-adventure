@@ -47,7 +47,7 @@ class AStarSolver:
                     new_f = new_g + new_h  # Total estimated cost
                     index += 1
                     heappush(priority_queue, (new_f, new_g, index, new_state, path + [(dx, dy)]))
-                    self.node_count += 1  # Tăng node_count mỗi khi thêm một trạng thái mới
+                    self.node_count += 1  
 
         return False  # Operation limit exceeded or no solution found
 
