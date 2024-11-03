@@ -146,7 +146,8 @@ class DrawGUI:
         self.back_button = ttk.Button(button_frame,
                                     text="Back",
                                     style='Modern.TButton',
-                                    command=self.on_back_pressed)
+                                    command=self.on_back_pressed,
+                                    width=15)  
         self.back_button.pack(side=tk.LEFT, padx=5)
 
         self.solve_button = ttk.Button(button_frame,
@@ -174,6 +175,7 @@ class DrawGUI:
                                 font=('Helvetica', 12),
                                 style='Controls.TLabel')
         weight_label.pack(pady=(10, 0))
+
 
     def on_back_pressed(self):  
         for widget in self.main_container.winfo_children():

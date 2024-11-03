@@ -11,7 +11,7 @@ class MenuScreen:
         left_frame.grid(row=0, column=0, sticky='nsew', padx=(20, 10), pady=20)
 
 
-        label = tk.Label(left_frame, text="Group Member", font=("Verdana", 24, 'bold'), bg='#f4f6f7', fg='#154360')
+        label = tk.Label(left_frame, text="Group Members", font=("Verdana", 24, 'bold'), bg='#f4f6f7', fg='#154360')
         left_frame.create_window(20, 30, anchor='nw', window=label)
 
         members = ["22125123 - Lê Khánh Vương", "22125081 - Dương Minh Quang", "21125131 - Huỳnh Hoàng Phúc", "22125080 - Tạ Hoàng Quân"]

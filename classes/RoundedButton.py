@@ -66,3 +66,4 @@ class RoundedFrame(tk.Canvas):
             x1, y1
         ]
         return self.create_polygon(points, **kwargs, smooth=True)
+
