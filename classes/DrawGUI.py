@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageTk
 
 class DrawGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Ares Stone Game")
-
+        self.load_images()
         # Initialize variables before setup
         self.selected_level = tk.StringVar()
         self.selected_algorithm = tk.StringVar()
@@ -188,7 +189,13 @@ class DrawGUI:
         if hasattr(self, 'menu_screen'):
             self.menu_screen.show()
 
-
+    def load_images(self):
+        # Tải các hình ảnh cần thiết và chuyển đổi sang ImageTk
+        self.image_wall = ImageTk.PhotoImage(Image.open("data/assets/Tiles/tile_0000.png"))
+        self.image_stone = ImageTk.PhotoImage(Image.open("data/assets/Tiles/tile_0001.png"))
+        self.image_ares = ImageTk.PhotoImage(Image.open("data/assets/Tiles/Characters/tile_0000.png"))
+        self.image_switch = ImageTk.PhotoImage(Image.open("data/assets/Tiles/tile_0002.png"))
+        self.image_empty = ImageTk.PhotoImage(Image.open("data/assets/Tiles/tile_0003.png"))
 
     def draw_state(self, state):
         self.canvas.delete("all")
@@ -242,6 +249,7 @@ class DrawGUI:
                                              fill='white',
                                              font=('Helvetica', int(cell_size / 3)))
                 elif char == '@':
+                    #self.canvas.create_image(x1, y1, anchor="nw", image=self.image_ares)  
                     self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['@'], width=0)
                 elif char == '.':
                     self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['.'], width=0)
