@@ -1,5 +1,7 @@
 import os
 import asyncio
+import tkinter as tk
+from tkinter import ttk
 from .GameState import GameState
 from .algorithms.BFS import BFSSolver
 from .algorithms.DFS import DFSSolver
@@ -81,6 +83,21 @@ class Core:
         level = self.gui.selected_level.get()
         self.load_level(level)
 
+    def show_error_popup(self, message):
+        popup = tk.Toplevel(self.gui.root)
+        popup.title("Error")
+        x = self.gui.root.winfo_x() + (self.gui.root.winfo_width() // 2) - 200
+        y = self.gui.root.winfo_y() + (self.gui.root.winfo_height() // 2) - 50
+        popup.geometry(f"400x100+{x}+{y}")
+        popup.transient(self.gui.root)
+        popup.grab_set()
+
+        msg_label = ttk.Label(popup, text=message, wraplength=350, justify='center')
+        msg_label.pack(expand=True, pady=10)
+
+        ok_button = ttk.Button(popup, text="OK", command=popup.destroy)
+        ok_button.pack(pady=(0, 10))
+
     async def solve_puzzle(self):
         if not self.current_state:
             return
@@ -118,7 +135,7 @@ class Core:
                 # Yield control to prevent freezing
                 await asyncio.sleep(0)
 
-            print("Cannot solve the puzzle after 1,000,000 operations.")
+            self.show_error_popup("Cannot solve the puzzle after 1,000,000 operations.")
             self.gui.solve_button.config(state='disabled')
             return False
 
