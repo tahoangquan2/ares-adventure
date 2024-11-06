@@ -66,6 +66,7 @@ class BFSSolver:
                     compressed_new = self.compress_state(new_state)
 
                     if compressed_new not in visited:
+                        print(compressed_new)
                         visited.add(compressed_new)
                         # Append direction character to path string instead of tuple
                         new_path = path + self.dir_to_char[(dx, dy)]
