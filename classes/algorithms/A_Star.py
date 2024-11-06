@@ -44,21 +44,6 @@ class AStarSolver:
         new_state.player_on_switch = player_pos in new_state.switches
         return new_state
 
-    def heuristic(self, state):
-        box_positions = state.get_boxes()
-        goal_positions = state.get_goals()
-
-        total_distance = 0
-        for box in box_positions:
-            min_distance = float('inf')
-            box_weight = state.get_weight(box[0], box[1])
-            for goal in goal_positions:
-                distance = (abs(box[0] - goal[0]) + abs(box[1] - goal[1])) * box_weight
-                min_distance = min(min_distance, distance)
-            total_distance += min_distance
-
-        return total_distance
-
     def process_one_state(self):
         if not self.priority_queue:
             return False
@@ -117,19 +102,8 @@ class AStarSolver:
 
         return self.solution[self.current_step]
 
+    # Hungarian algorithm heuristic
     def heuristic(self, state):
-        box_positions = state.get_boxes()
-        goal_positions = state.get_goals()
-
-        # Calculate Manhattan distance for each box to its closest goal, factoring in weights
-        box_goal_distance = sum(
-            min((abs(box[0] - goal[0]) + abs(box[1] - goal[1])) * (state.get_weight(box[0], box[1]) + 1) for goal in goal_positions)
-            for box_index, box in enumerate(box_positions)
-        )
-
-        return box_goal_distance
-
-    def heuristic_Hungarian_Algo(self, state):
         box_positions = state.get_boxes()
         goal_positions = state.get_goals()
 
@@ -140,7 +114,8 @@ class AStarSolver:
             for goal in goal_positions:
                 distance = abs(box[0] - goal[0]) + abs(box[1] - goal[1])
                 weight = state.get_weight(box[0], box[1])
-                box_costs.append(distance * (weight + 1))  # Factor in weight + 1
+                # Factor in weight + 1
+                box_costs.append(distance * (weight + 1))
             cost_matrix.append(box_costs)
 
         # Apply Hungarian algorithm to find minimum cost assignment
