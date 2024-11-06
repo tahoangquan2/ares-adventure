@@ -68,6 +68,8 @@ class BFSSolver:
                 if compressed_new not in self.visited:
                     self.visited.add(compressed_new)
                     new_path = path + self.dir_to_char[(dx, dy)]
+                    if len(self.queue) % 1000 == 0:
+                        print(len(self.queue), compressed_new, new_path)
                     self.queue.append((compressed_new, new_path))
 
         return False

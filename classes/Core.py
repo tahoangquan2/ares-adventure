@@ -111,12 +111,16 @@ class Core:
         try:
             if self.gui.selected_algorithm.get() == "bfs":
                 self.solver = BFSSolver(self.current_state)
+                data_structure = self.solver.queue
             elif self.gui.selected_algorithm.get() == "dfs":
                 self.solver = DFSSolver(self.current_state)
+                data_structure = self.solver.stack
             elif self.gui.selected_algorithm.get() == "ucs":
                 self.solver = UCSSolver(self.current_state)
+                data_structure = self.solver.priority_queue
             else:
                 self.solver = AStarSolver(self.current_state)
+                data_structure = self.solver.priority_queue
 
             operations = 0
             chunk_size = 1000
@@ -132,7 +136,7 @@ class Core:
                         self.gui.solve_button.config(state='disabled')
                         return True
 
-                    if not self.solver.queue:  # No more states to process
+                    if not data_structure:  # No more states to process
                         break
 
                 # Yield control to prevent freezing

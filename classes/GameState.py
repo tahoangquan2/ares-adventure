@@ -110,18 +110,21 @@ class GameState:
         new_state.stones = self.stones.copy()
         new_state.player_pos = self.player_pos
         new_state.player_on_switch = self.player_on_switch
+        print("create new state 1")
 
         # Apply updates
         if 'player_pos' in updates:
             new_pos = updates['player_pos']
             new_state.player_pos = new_pos
             new_state.player_on_switch = new_pos in new_state.switches
+        print("create new state 1")
 
         if 'stones' in updates:
             old_pos, new_pos = updates['stones']
             if old_pos in new_state.stones:
                 weight = new_state.stones.pop(old_pos)
                 new_state.stones[new_pos] = weight
+        print("create new state 2")
 
         return new_state
 

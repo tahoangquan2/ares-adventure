@@ -33,4 +33,5 @@ class CharacterMove:
         updates['player_pos'] = (new_x, new_y)
 
         # Create new state with updates
+        print("make move")
         return state.create_new_state(updates, stone_move)

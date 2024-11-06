@@ -1,5 +1,6 @@
 from ..CharacterMove import CharacterMove
 from ..GameState import GameState
+import asyncio
 from heapq import heappop, heappush
 
 class AStarSolver:
@@ -14,6 +15,18 @@ class AStarSolver:
             (0, -1): 'L', (-1, 0): 'U'
         }
         self.char_to_dir = {v: k for k, v in self.dir_to_char.items()}
+
+        # Initialize solver state
+        self.directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        self.index = 0
+        self.reset_solver()
+
+    def reset_solver(self):
+        compressed_initial = self.compress_state(self.initial_state)
+        initial_h = self.heuristic(self.initial_state)
+        self.priority_queue = [(initial_h, 0, 0, compressed_initial, "")]
+        self.visited = {compressed_initial}
+        self.index = 0
 
     def compress_state(self, state):
         stones = tuple(sorted((pos, weight) for pos, weight in state.stones.items()))
@@ -35,7 +48,6 @@ class AStarSolver:
         box_positions = state.get_boxes()
         goal_positions = state.get_goals()
 
-        # Calculate Manhattan distance for each box to its closest goal
         total_distance = 0
         for box in box_positions:
             min_distance = float('inf')
@@ -47,40 +59,67 @@ class AStarSolver:
 
         return total_distance
 
-    def solve(self):
-        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        compressed_initial = self.compress_state(self.initial_state)
-        # Priority queue: (f_score, g_score, index, compressed_state, path_string)
-        initial_h = self.heuristic(self.initial_state)
-        priority_queue = [(initial_h, 0, 0, compressed_initial, "")]
-        visited = {compressed_initial}
+    def process_one_state(self):
+        if not self.priority_queue:
+            return False
+
+        f, g, _, compressed_current, path = heappop(self.priority_queue)
+        current_state = self.decompress_state(compressed_current)
+
+        if current_state.is_solved():
+            self.solution = [self.char_to_dir[c] for c in path]
+            self.current_step = -1
+            return True
+
+        x, y = current_state.player_pos
+        for dx, dy in self.directions:
+            if self.character_move.can_move(current_state, x, y, dx, dy):
+                new_state = self.character_move.make_move(current_state, x, y, dx, dy)
+                compressed_new = self.compress_state(new_state)
+
+                if compressed_new not in self.visited:
+                    self.visited.add(compressed_new)
+                    self.index += 1
+                    new_g = g + 1
+                    new_h = self.heuristic(new_state)
+                    new_f = new_g + new_h
+                    new_path = path + self.dir_to_char[(dx, dy)]
+                    heappush(self.priority_queue, (new_f, new_g, self.index, compressed_new, new_path))
+
+        return False
+
+    async def solve_async(self):
+        self.reset_solver()
         operations = 0
-        index = 0
+        chunk_size = 1000
 
-        while priority_queue and operations < self.operation_limit:
+        while operations < self.operation_limit:
+            # Process a chunk of states
+            for _ in range(chunk_size):
+                if not self.priority_queue or operations >= self.operation_limit:
+                    break
+
+                operations += 1
+                if self.process_one_state():
+                    yield {'solved': True, 'operations': operations}
+                    return
+
+            # Yield control after processing the chunk
+            yield {'solved': False, 'operations': operations}
+            await asyncio.sleep(0)
+
+        yield {'solved': False, 'operations': operations}
+
+    def solve(self):
+        self.reset_solver()
+        operations = 0
+
+        while operations < self.operation_limit:
             operations += 1
-            f, g, _, compressed_current, path = heappop(priority_queue)
-            current_state = self.decompress_state(compressed_current)
-
-            if current_state.is_solved():
-                self.solution = [self.char_to_dir[c] for c in path]
-                self.current_step = -1
+            if self.process_one_state():
                 return True
-
-            x, y = current_state.player_pos
-            for dx, dy in directions:
-                if self.character_move.can_move(current_state, x, y, dx, dy):
-                    new_state = self.character_move.make_move(current_state, x, y, dx, dy)
-                    compressed_new = self.compress_state(new_state)
-
-                    if compressed_new not in visited:
-                        visited.add(compressed_new)
-                        index += 1
-                        new_g = g + 1
-                        new_h = self.heuristic(new_state)
-                        new_f = new_g + new_h
-                        new_path = path + self.dir_to_char[(dx, dy)]
-                        heappush(priority_queue, (new_f, new_g, index, compressed_new, new_path))
+            if not self.priority_queue:
+                return False
 
         return False
 
