@@ -1,4 +1,5 @@
 import os
+import asyncio
 import tkinter as tk
 from tkinter import ttk
 from .GameState import GameState
@@ -16,18 +17,16 @@ class Core:
         self.is_solved = False
         self.current_step = 0
         self.total_weight = 0
-        self.play_speed = 200 # ms
+        self.play_speed = 200
+        self.current_task = None
 
         self.setup_bindings()
-
-        # Initial load of level 1
         self.load_level("1")
 
     def setup_bindings(self):
-        # Bind to StringVar changes
         self.gui.selected_level.trace_add('write', lambda *args: self.on_level_change())
         self.gui.selected_algorithm.trace_add('write', lambda *args: self.on_algorithm_change())
-        self.gui.solve_button.config(command=self.solve_puzzle)
+        self.gui.solve_button.config(command=self.start_solve)
         self.gui.play_button.config(command=self.toggle_play)
         self.gui.next_button.config(command=self.next_step)
         self.gui.root.bind('<Configure>', self.update_display)
@@ -66,16 +65,21 @@ class Core:
         self.reset_solve_state()
 
     def on_level_change(self):
+        if self.current_task:
+            # Cancel any running solve task
+            self.current_task.cancel()
+            self.current_task = None
         level = self.gui.selected_level.get()
         self.reset_full_state()
         self.load_level(level)
 
     def on_algorithm_change(self):
-        # First stop any ongoing playback
+        if self.current_task:
+            # Cancel any running solve task
+            self.current_task.cancel()
+            self.current_task = None
         self.stop_playback()
-        # Then reset the solver state
         self.reset_full_state()
-        # Redraw the initial state
         level = self.gui.selected_level.get()
         self.load_level(level)
 
@@ -94,43 +98,76 @@ class Core:
         ok_button = ttk.Button(popup, text="OK", command=popup.destroy)
         ok_button.pack(pady=(0, 10))
 
-    def solve_puzzle(self):
+    async def solve_puzzle(self):
         if not self.current_state:
             return
 
-        if self.gui.selected_algorithm.get() == "bfs":
-            self.solver = BFSSolver(self.current_state)
-        elif self.gui.selected_algorithm.get() == "dfs":
-            self.solver = DFSSolver(self.current_state)
-        elif self.gui.selected_algorithm.get() == "ucs":
-            self.solver = UCSSolver(self.current_state)
-        else:
-            self.solver = AStarSolver(self.current_state)
- 
-        if self.solver.solve():
-            self.is_solved = True
-            self.gui.play_button.config(state='normal')
-            self.gui.next_button.config(state='normal')
+        try:
+            if self.gui.selected_algorithm.get() == "bfs":
+                self.solver = BFSSolver(self.current_state)
+                data_structure = self.solver.queue
+            elif self.gui.selected_algorithm.get() == "dfs":
+                self.solver = DFSSolver(self.current_state)
+                data_structure = self.solver.stack
+            elif self.gui.selected_algorithm.get() == "ucs":
+                self.solver = UCSSolver(self.current_state)
+                data_structure = self.solver.priority_queue
+            else:
+                self.solver = AStarSolver(self.current_state)
+                data_structure = self.solver.priority_queue
+
+            operations = 0
+            chunk_size = 1000
+
+            while operations < self.solver.operation_limit:
+                for _ in range(chunk_size):
+                    operations += 1
+                    if self.solver.process_one_state():
+                        self.is_solved = True
+                        self.gui.play_button.config(state='normal')
+                        self.gui.next_button.config(state='normal')
+                        self.gui.solve_button.config(state='disabled')
+                        return True
+
+                    if not data_structure:
+                        break
+
+                # Yield control to prevent freezing
+                await asyncio.sleep(0)
+
+            self.show_error_popup("Cannot solve the puzzle after 1,000,000 operations.")
             self.gui.solve_button.config(state='disabled')
-        else:
-            self.show_error_popup("Cannot solve the puzzle after 1000000 (1e6) operations.")
-            self.gui.solve_button.config(state='disabled')
+            return False
+
+        # Clean up when task is cancelled
+        except asyncio.CancelledError:
+            self.solver = None
+            self.gui.solve_button.config(state='normal')
+            # Re-raise to properly handle cancellation
+            raise
+
+    def start_solve(self):
+        if self.current_task:
+            self.current_task.cancel()
+        self.current_task = asyncio.create_task(self.solve_puzzle())
+        self.gui.solve_button.config(state='disabled')
 
     def reset_solve_state(self):
-        # Stop any ongoing playback
+        if self.current_task:
+            self.current_task.cancel()
+            self.current_task = None
+
         self.is_playing = False
         self.is_solved = False
         self.solver = None
         self.current_step = 0
         self.total_weight = 0
 
-        # Reset UI elements
         self.gui.weight_var.set("Total Weight: 0       Step: 0")
         self.gui.solve_button.config(state='normal')
         self.gui.play_button.config(text="Play", state='disabled')
         self.gui.next_button.config(state='disabled')
 
-    # Reset all state variables including game state
     def reset_full_state(self):
         self.current_state = None
         self.reset_solve_state()
@@ -140,9 +177,6 @@ class Core:
             self.is_playing = False
             self.gui.play_button.config(text="Play")
             self.gui.next_button.config(state='normal')
-            # Cancel any pending auto_play calls
-            if hasattr(self, '_after_id'):
-                self.gui.root.after_cancel(self._after_id)
 
     # Execute the next step in the solution
     def next_step(self):
@@ -196,7 +230,7 @@ class Core:
             has_next = self.next_step()
             if has_next:
                 # Store the after ID so we can cancel it if needed
-                self._after_id = self.gui.root.after(self.play_speed, self.auto_play)
+                self.gui.root.after(self.play_speed, self.auto_play)
             else:
                 # No more steps then stop playing
                 self.stop_playback()

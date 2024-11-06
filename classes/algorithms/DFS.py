@@ -1,4 +1,5 @@
 from ..CharacterMove import CharacterMove
+from ..GameState import GameState
 
 class DFSSolver:
     def __init__(self, initial_state):
@@ -7,47 +8,73 @@ class DFSSolver:
         self.current_step = -1
         self.operation_limit = 10**6
         self.character_move = CharacterMove()
+        self.dir_to_char = {
+            (0, 1): 'R', (1, 0): 'D',
+            (0, -1): 'L', (-1, 0): 'U'
+        }
+        self.char_to_dir = {v: k for k, v in self.dir_to_char.items()}
+
+        self.stack = []
+        self.visited = set()
+        self.directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        self.reset_solver()
+
+    def reset_solver(self):
+        """Reset solver to initial state"""
+        compressed_initial = self.compress_state(self.initial_state)
+        self.stack = [(compressed_initial, "")]
+        self.visited = {compressed_initial}
+
+    def compress_state(self, state):
+        stones = tuple(sorted((pos, weight) for pos, weight in state.stones.items()))
+        return (state.player_pos, stones)
+
+    def decompress_state(self, compressed):
+        player_pos, stones = compressed
+        new_state = GameState()
+        new_state.width = self.initial_state.width
+        new_state.height = self.initial_state.height
+        new_state.walls = self.initial_state.walls
+        new_state.switches = self.initial_state.switches
+        new_state.player_pos = player_pos
+        new_state.stones = dict(stones)
+        new_state.player_on_switch = player_pos in new_state.switches
+        return new_state
+
+    def process_one_state(self):
+        if not self.stack:
+            return False
+
+        compressed_current, path = self.stack.pop()
+        current_state = self.decompress_state(compressed_current)
+
+        if current_state.is_solved():
+            self.solution = [self.char_to_dir[c] for c in path]
+            self.current_step = -1
+            return True
+
+        x, y = current_state.player_pos
+        for dx, dy in self.directions:
+            if self.character_move.can_move(current_state, x, y, dx, dy):
+                new_state = self.character_move.make_move(current_state, x, y, dx, dy)
+                compressed_new = self.compress_state(new_state)
+
+                if compressed_new not in self.visited:
+                    self.visited.add(compressed_new)
+                    new_path = path + self.dir_to_char[(dx, dy)]
+                    self.stack.append((compressed_new, new_path))
+
+        return False
 
     def solve(self):
-        # right, down, left, up
-        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        stack = [(self.initial_state, [])]
-        visited = set()
-        state_paths = {}
+        self.reset_solver()
         operations = 0
 
-        while stack and operations < self.operation_limit:
+        while self.stack and operations < self.operation_limit:
             operations += 1
-            current_state, path = stack.pop()
-            state_string = current_state.to_string()
-
-            # Check if we already found a shorter path to this state
-            if state_string in state_paths and len(state_paths[state_string]) <= len(path):
-                continue
-
-            state_paths[state_string] = path
-            visited.add(state_string)
-
-            if current_state.is_solved():
-                self.solution = path
-                self.current_step = -1
+            if self.process_one_state():
                 return True
 
-            player_pos = current_state.find_player()
-            if not player_pos:
-                continue
-
-            x, y = player_pos
-            for dx, dy in directions:
-                if self.character_move.can_move(current_state, x, y, dx, dy):
-                    new_state = self.character_move.make_move(current_state, x, y, dx, dy)
-                    new_state_string = new_state.to_string()
-
-                    # Only add to stack if we haven't found this state yet or if this path is shorter
-                    if new_state_string not in state_paths or len(path) + 1 < len(state_paths[new_state_string]):
-                        stack.append((new_state, path + [(dx, dy)]))
-
-        # Operation limit exceeded or no solution found
         return False
 
     def can_move(self, state, x, y, dx, dy):

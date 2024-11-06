@@ -1,101 +1,129 @@
 class GameState:
-    def __init__(self, map_data, weight_data):
-        self.map = map_data
-        self.weight = weight_data
-        self.width = len(map_data)
-        self.height = len(map_data[0]) if self.width > 0 else 0
+    def __init__(self, map_data=None, weight_data=None):
+        if map_data:
+            self.width = len(map_data)
+            self.height = len(map_data[0]) if self.width > 0 else 0
+            self._init_from_map(map_data, weight_data)
+        else:
+            self.width = 0
+            self.height = 0
+            self.walls = set()
+            self.switches = set()
+            self.stones = {}
+            self.player_pos = None
+            self.player_on_switch = False
+
+    # Equality check for states
+    def __eq__(self, other):
+        if not isinstance(other, GameState):
+            return False
+        return (self.player_pos == other.player_pos and
+                self.stones == other.stones)
+
+    # Hash for use in sets and as dictionary keys
+    def __hash__(self):
+        stones_tuple = tuple(sorted((pos, weight) for pos, weight in self.stones.items()))
+        return hash((self.player_pos, stones_tuple))
+
+    def _init_from_map(self, map_data, weight_data):
+        self.walls = set()
+        self.switches = set()
+        self.stones = {}
+        self.player_pos = None
+        self.player_on_switch = False
+
+        for x in range(self.width):
+            for y in range(self.height):
+                cell = map_data[x][y]
+                if cell == '#':
+                    self.walls.add((x, y))
+                elif cell == '.':
+                    self.switches.add((x, y))
+                elif cell in ['$', '*']:
+                    weight = weight_data[x][y] if weight_data else 1
+                    self.stones[(x, y)] = weight
+                    if cell == '*':
+                        self.switches.add((x, y))
+                elif cell == '@':
+                    self.player_pos = (x, y)
+                elif cell == '+':
+                    self.player_pos = (x, y)
+                    self.player_on_switch = True
+                    self.switches.add((x, y))
 
     def get_weight(self, x, y):
-        if 0 <= y < self.height and 0 <= x < self.width:
-            return self.weight[x][y]
-        return 0
+        return self.stones.get((x, y), 0)
 
     def find_player(self):
-        for y in range(self.height):
-            for x in range(self.width):
-                if self.map[x][y] in ['@', '+']:
-                    return (x, y)
-        return None
+        return self.player_pos
 
     def find_stones(self):
-        stones = []
-        for y in range(self.height):
-            for x in range(self.width):
-                if self.map[x][y] in ['$', '*']:
-                    stones.append((x, y))
-        return stones
+        return list(self.stones.keys())
 
     def find_switches(self):
-        switches = []
-        for y in range(self.height):
-            for x in range(self.width):
-                if self.map[x][y] in ['.', '*', '+']:
-                    switches.append((x, y))
-        return switches
+        return list(self.switches)
 
     def is_solved(self):
-        stones = self.find_stones()
-        switches = self.find_switches()
-        return all(stone in switches for stone in stones)
+        return all(pos in self.switches for pos in self.stones.keys())
 
     def get_cell(self, x, y):
-        if 0 <= y < self.height and 0 <= x < self.width:
-            return self.map[x][y]
-        return '#' # Out of bounds
+        if not (0 <= x < self.width and 0 <= y < self.height):
+            return '#'
 
-    def to_string(self):
-        return '\n'.join(''.join(row) for row in self.map)
+        pos = (x, y)
+        if pos in self.walls:
+            return '#'
+        elif pos in self.stones:
+            return '*' if pos in self.switches else '$'
+        elif pos == self.player_pos:
+            return '+' if self.player_on_switch else '@'
+        elif pos in self.switches:
+            return '.'
+        return ' '
 
-    def create_new_state(self, new_map, stone_move = None):
-        new_state = GameState(new_map, [])
-        new_state.weight = [[0 for _ in range(self.height)] for _ in range(self.width)]
+    def create_new_state(self, updates, stone_move=None):
+        new_state = GameState()
+        new_state.width = self.width
+        new_state.height = self.height
+        new_state.walls = self.walls.copy()
+        new_state.switches = self.switches.copy()
+        new_state.stones = self.stones.copy()
+        new_state.player_pos = self.player_pos
+        new_state.player_on_switch = self.player_on_switch
 
-        # Copy all weights first
-        for i in range(self.width):
-            for j in range(self.height):
-                new_state.weight[i][j] = self.weight[i][j]
+        # Apply updates
+        if 'player_pos' in updates:
+            new_pos = updates['player_pos']
+            new_state.player_pos = new_pos
+            new_state.player_on_switch = new_pos in new_state.switches
 
-        # If a stone was moved, update its position in weight map
-        if stone_move:
-            (old_x, old_y), (new_x, new_y) = stone_move
-            new_state.weight[new_x][new_y] = self.weight[old_x][old_y]
-            new_state.weight[old_x][old_y] = 0
+        if 'stones' in updates:
+            old_pos, new_pos = updates['stones']
+            if old_pos in new_state.stones:
+                weight = new_state.stones.pop(old_pos)
+                new_state.stones[new_pos] = weight
 
         return new_state
 
-    # Check if a stone can be pushed in the given direction
     def can_push_stone(self, x, y, dx, dy):
-        # First check if given position is actually a stone
-        if self.map[x][y] not in ['$', '*']:
+        pos = (x, y)
+        if pos not in self.stones:
             return False
 
-        # Check the destination position
-        new_x, new_y = x + dx, y + dy
+        new_pos = (x + dx, y + dy)
 
         # Check bounds
-        if not (0 <= new_y < self.height and 0 <= new_x < self.width):
+        if not (0 <= new_pos[0] < self.width and 0 <= new_pos[1] < self.height):
             return False
 
-        # Check if destination has stone or wall
-        if self.map[new_x][new_y] in ['#', '$', '*']:
+        # Check if destination has wall or another stone
+        if new_pos in self.walls or new_pos in self.stones:
             return False
 
         return True
 
-
-     # for heuristic calculation
     def get_boxes(self):
-        boxes = []
-        for x in range(self.width):
-            for y in range(self.height):
-                if self.map[x][y] in ['$', '*']:  # '$' for box, '*' for box on switch
-                    boxes.append((x, y))
-        return boxes
-    
+        return list(self.stones.keys())
+
     def get_goals(self):
-        goals = []
-        for x in range(self.width):
-            for y in range(self.height):
-                if self.map[x][y] in ['.', '*', '+']:  # '.' for goal, '*' for box on goal, '+' for player on goal
-                    goals.append((x, y))
-        return goals
+        return list(self.switches)
