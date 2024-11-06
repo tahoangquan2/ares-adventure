@@ -9,39 +9,45 @@ class BFSSolver:
         self.operation_limit = 10**6
         self.character_move = CharacterMove()
 
+    def state_to_tuple(self, state):
+        """Convert a state to a minimal tuple representation
+        Returns: tuple(player_pos, ((stone1_pos, weight1), (stone2_pos, weight2), ...))
+        """
+        stones_tuple = tuple(sorted((pos, weight) for pos, weight in state.stones.items()))
+        return (state.player_pos, stones_tuple)
+
     def solve(self):
         # right, down, left, up
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         queue = deque([(self.initial_state, [])])
-        visited = set()
+        visited = set()  # Will store tuples instead of strings
         operations = 0
 
         while queue and operations < self.operation_limit:
             operations += 1
             current_state, path = queue.popleft()
-            state_string = current_state.to_string()
+
+            # Convert current state to tuple for comparison
+            state_tuple = self.state_to_tuple(current_state)
+
+            if state_tuple in visited:
+                continue
 
             if current_state.is_solved():
                 self.solution = path
                 self.current_step = -1
                 return True
 
-            if state_string in visited:
-                continue
+            visited.add(state_tuple)  # Add tuple to visited set
+            # if operations % 10000 == 0:
+            #     print(len(visited), len(queue))
+            x, y = current_state.player_pos
 
-            visited.add(state_string)
-            player_pos = current_state.find_player()
-
-            if not player_pos:
-                continue
-
-            x, y = player_pos
             for dx, dy in directions:
                 if self.character_move.can_move(current_state, x, y, dx, dy):
                     new_state = self.character_move.make_move(current_state, x, y, dx, dy)
                     queue.append((new_state, path + [(dx, dy)]))
 
-        # Operation limit exceeded or no solution found
         return False
 
     def can_move(self, state, x, y, dx, dy):

@@ -171,13 +171,13 @@ class DrawGUI:
 
     def draw_state(self, state):
         self.canvas.delete("all")
-        if not state.map:
+        if state.width == 0 or state.height == 0:
             return
 
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
-        map_height = len(state.map[0])
-        map_width = len(state.map)
+        map_height = state.height
+        map_width = state.width
 
         cell_width = canvas_width / (map_width + 2)
         cell_height = canvas_height / (map_height + 2)
@@ -194,38 +194,70 @@ class DrawGUI:
             ' ': '#ffffff'   # Empty
         }
 
+        # Draw empty cells and walls
         for y in range(map_height):
             for x in range(map_width):
-                char = state.map[x][y]
                 x1 = x_offset + x * cell_size
                 y1 = y_offset + y * cell_size
                 x2 = x1 + cell_size
                 y2 = y1 + cell_size
 
+                # Calculate padded coordinates for rounded elements
                 padding = cell_size * 0.2
                 x1p, y1p = x1 + padding, y1 + padding
                 x2p, y2p = x2 - padding, y2 - padding
 
-                if char == '#':
+                pos = (x, y)
+                if pos in state.walls:
                     self.canvas.create_rectangle(x1, y1, x2, y2, fill=colors['#'], width=0)
-                elif char in ['$', '*']:
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['$'], width=0)
-                    if char == '*':
-                        self.canvas.create_oval(x1p, y1p, x2p, y2p, outline=colors['.'], width=2)
-                    weight = state.get_weight(x, y)
-                    if weight > 0:
-                        text_x = (x1 + x2) / 2
-                        text_y = (y1 + y2) / 2
-                        self.canvas.create_text(text_x, text_y,
-                                             text=str(weight),
-                                             fill='white',
-                                             font=('Helvetica', int(cell_size / 3)))
-                elif char == '@':
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['@'], width=0)
-                elif char == '.':
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['.'], width=0)
-                elif char == '+':
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p,
-                                         fill=colors['@'],
-                                         outline=colors['.'],
-                                         width=3)
+
+        # Draw switches (under stones and player)
+        for x, y in state.switches:
+            x1 = x_offset + x * cell_size
+            y1 = y_offset + y * cell_size
+            padding = cell_size * 0.2
+            x1p = x1 + padding
+            y1p = y1 + padding
+            x2p = x1p + cell_size - 2*padding
+            y2p = y1p + cell_size - 2*padding
+
+            if (x, y) not in state.stones and (x, y) != state.player_pos:
+                self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['.'], width=0)
+
+        # Draw stones
+        for (x, y), weight in state.stones.items():
+            x1 = x_offset + x * cell_size
+            y1 = y_offset + y * cell_size
+            padding = cell_size * 0.2
+            x1p = x1 + padding
+            y1p = y1 + padding
+            x2p = x1p + cell_size - 2*padding
+            y2p = y1p + cell_size - 2*padding
+
+            self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['$'], width=0)
+            if (x, y) in state.switches:
+                self.canvas.create_oval(x1p, y1p, x2p, y2p, outline=colors['.'], width=2)
+
+            # Draw weight
+            if weight > 0:
+                text_x = (x1p + x2p) / 2
+                text_y = (y1p + y2p) / 2
+                self.canvas.create_text(text_x, text_y,
+                                    text=str(weight),
+                                    fill='white',
+                                    font=('Helvetica', int(cell_size / 3)))
+
+        # Draw player
+        if state.player_pos:
+            x, y = state.player_pos
+            x1 = x_offset + x * cell_size
+            y1 = y_offset + y * cell_size
+            padding = cell_size * 0.2
+            x1p = x1 + padding
+            y1p = y1 + padding
+            x2p = x1p + cell_size - 2*padding
+            y2p = y1p + cell_size - 2*padding
+
+            self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['@'], width=0)
+            if state.player_on_switch:
+                self.canvas.create_oval(x1p, y1p, x2p, y2p, outline=colors['.'], width=3)
