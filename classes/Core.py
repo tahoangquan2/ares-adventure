@@ -128,6 +128,9 @@ class Core:
             self.gui.play_button.config(state='normal')
             self.gui.next_button.config(state='normal')
             self.gui.solve_button.config(state='disabled')
+        else:
+            self.show_error_popup("Cannot solve the puzzle after 1000000 (1e6) operations.")
+            self.gui.solve_button.config(state='disabled')
 
 
     def calculate_total_weight_for_solution(self, solution):
