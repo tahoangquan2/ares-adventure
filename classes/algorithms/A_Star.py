@@ -72,7 +72,7 @@ class AStarSolver:
 
         # Calculate Manhattan distance for each box to its closest goal, factoring in weights
         box_goal_distance = sum(
-            min((abs(box[0] - goal[0]) + abs(box[1] - goal[1])) * state.get_weight(box[0], box[1]) for goal in goal_positions)
+            min((abs(box[0] - goal[0]) + abs(box[1] - goal[1])) * (state.get_weight(box[0], box[1]) + 1) for goal in goal_positions)
             for box_index, box in enumerate(box_positions)
         )
 
