@@ -127,6 +127,10 @@ class Core:
                         self.gui.play_button.config(state='normal')
                         self.gui.next_button.config(state='normal')
                         self.gui.solve_button.config(state='disabled')
+
+                        # Save metrics after successful solve
+                        level_number = self.gui.selected_level.get()
+                        self.solver.save_metrics(level_number)
                         return True
 
                     if not data_structure:

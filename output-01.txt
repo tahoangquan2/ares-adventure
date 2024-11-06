@@ -1,0 +1,6 @@
+BFS
+Steps: 16, Weight: 711, Nodes: 13167, Time (ms): 147.59, Memory (MB): 6.47
+L U L U R D D D D D D D D L D R
+BFS
+Steps: 16, Weight: 711, Nodes: 13167, Time (ms): 158.44, Memory (MB): 6.51
+L U L U R D D D D D D D D L D R

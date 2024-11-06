@@ -1,6 +1,7 @@
 from collections import deque
 from ..CharacterMove import CharacterMove
 from ..GameState import GameState
+from ..AlgorithmMetrics import AlgorithmMetrics
 
 class BFSSolver:
     def __init__(self, initial_state):
@@ -15,6 +16,7 @@ class BFSSolver:
         }
         self.char_to_dir = {v: k for k, v in self.dir_to_char.items()}
 
+        self.metrics = AlgorithmMetrics()
         self.queue = deque()
         self.visited = set()
         self.directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -22,8 +24,10 @@ class BFSSolver:
 
     def reset_solver(self):
         compressed_initial = self.compress_state(self.initial_state)
-        self.queue = deque([(compressed_initial, "")])
+        self.queue = deque([(compressed_initial, "", 0)])  # Added weight tracking
         self.visited = {compressed_initial}
+        self.metrics = AlgorithmMetrics()
+        self.metrics.start_tracking()
 
     def compress_state(self, state):
         stones = tuple(sorted((pos, weight) for pos, weight in state.stones.items()))
@@ -45,12 +49,17 @@ class BFSSolver:
         if not self.queue:
             return False
 
-        compressed_current, path = self.queue.popleft()
+        compressed_current, path, current_weight = self.queue.popleft()
         current_state = self.decompress_state(compressed_current)
+        self.metrics.nodes_explored += 1
 
         if current_state.is_solved():
             self.solution = [self.char_to_dir[c] for c in path]
             self.current_step = -1
+            self.metrics.stop_tracking()
+            self.metrics.total_steps = len(path)
+            self.metrics.total_weight = current_weight
+            self.metrics.solution_path = path
             return True
 
         x, y = current_state.player_pos
@@ -62,7 +71,14 @@ class BFSSolver:
                 if compressed_new not in self.visited:
                     self.visited.add(compressed_new)
                     new_path = path + self.dir_to_char[(dx, dy)]
-                    self.queue.append((compressed_new, new_path))
+
+                    # Calculate weight for this move
+                    additional_weight = 1
+                    new_pos = (x + dx, y + dy)
+                    if new_pos in current_state.stones:
+                        additional_weight += current_state.get_weight(*new_pos)
+
+                    self.queue.append((compressed_new, new_path, current_weight + additional_weight))
 
         return False
 
@@ -76,6 +92,9 @@ class BFSSolver:
                 return True
 
         return False
+
+    def save_metrics(self, level_number):
+        self.metrics.save_to_file("BFS", level_number)
 
     def can_move(self, state, x, y, dx, dy):
         return self.character_move.can_move(state, x, y, dx, dy)

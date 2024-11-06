@@ -1,0 +1,9 @@
+BFS
+Steps: 8, Weight: 11, Nodes: 53, Time (ms): 0.00, Memory (MB): 0.00
+L U R D R D D L
+BFS
+Steps: 8, Weight: 11, Nodes: 53, Time (ms): 0.00, Memory (MB): 0.00
+L U R D R D D L
+BFS
+Steps: 8, Weight: 11, Nodes: 53, Time (ms): 0.00, Memory (MB): 0.00
+L U R D R D D L
