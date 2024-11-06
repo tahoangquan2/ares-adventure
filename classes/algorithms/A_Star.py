@@ -1,8 +1,8 @@
 from ..CharacterMove import CharacterMove
 from ..GameState import GameState
+from ..AlgorithmMetrics import AlgorithmMetrics
 from heapq import heappop, heappush
 from scipy.optimize import linear_sum_assignment
-
 
 class AStarSolver:
     def __init__(self, initial_state):
@@ -19,14 +19,18 @@ class AStarSolver:
 
         self.directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         self.index = 0
+        self.metrics = AlgorithmMetrics()
         self.reset_solver()
 
     def reset_solver(self):
         compressed_initial = self.compress_state(self.initial_state)
         initial_h = self.heuristic(self.initial_state)
-        self.priority_queue = [(initial_h, 0, 0, compressed_initial, "")]
+        # Added total_weight tracking (g is now actual weight, not just steps)
+        self.priority_queue = [(initial_h, 0, 0, compressed_initial, "", 0)]
         self.visited = {compressed_initial}
         self.index = 0
+        self.metrics = AlgorithmMetrics()
+        self.metrics.start_tracking()
 
     def compress_state(self, state):
         stones = tuple(sorted((pos, weight) for pos, weight in state.stones.items()))
@@ -48,12 +52,17 @@ class AStarSolver:
         if not self.priority_queue:
             return False
 
-        f, g, _, compressed_current, path = heappop(self.priority_queue)
+        f, g, _, compressed_current, path, total_weight = heappop(self.priority_queue)
         current_state = self.decompress_state(compressed_current)
+        self.metrics.nodes_explored += 1
 
         if current_state.is_solved():
             self.solution = [self.char_to_dir[c] for c in path]
             self.current_step = -1
+            self.metrics.stop_tracking()
+            self.metrics.total_steps = len(path)
+            self.metrics.total_weight = total_weight
+            self.metrics.solution_path = path
             return True
 
         x, y = current_state.player_pos
@@ -65,11 +74,22 @@ class AStarSolver:
                 if compressed_new not in self.visited:
                     self.visited.add(compressed_new)
                     self.index += 1
-                    new_g = g + 1
+
+                    # Calculate actual weight for this move
+                    move_weight = 1
+                    new_pos = (x + dx, y + dy)
+                    if new_pos in current_state.stones:
+                        move_weight += current_state.get_weight(*new_pos)
+
+                    new_total_weight = total_weight + move_weight
+                    # g is now actual weight
+                    new_g = g + move_weight
                     new_h = self.heuristic(new_state)
                     new_f = new_g + new_h
                     new_path = path + self.dir_to_char[(dx, dy)]
-                    heappush(self.priority_queue, (new_f, new_g, self.index, compressed_new, new_path))
+
+                    heappush(self.priority_queue,
+                            (new_f, new_g, self.index, compressed_new, new_path, new_total_weight))
 
         return False
 
@@ -114,7 +134,7 @@ class AStarSolver:
             for goal in goal_positions:
                 distance = abs(box[0] - goal[0]) + abs(box[1] - goal[1])
                 weight = state.get_weight(box[0], box[1])
-                # Factor in weight + 1
+                # Factor in weight for moving the stone
                 box_costs.append(distance * (weight + 1))
             cost_matrix.append(box_costs)
 
@@ -125,3 +145,6 @@ class AStarSolver:
         total_cost = sum(cost_matrix[row][col] for row, col in zip(row_ind, col_ind))
 
         return total_cost
+
+    def save_metrics(self, level_number):
+        self.metrics.save_to_file("A*", level_number)

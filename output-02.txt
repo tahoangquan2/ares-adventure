@@ -1,3 +1,6 @@
 BFS
 Steps: 5, Weight: 8, Nodes: 19, Time (ms): 0.00, Memory (MB): 0.00
 R D L D R
+DFS
+Steps: 7, Weight: 10, Nodes: 8, Time (ms): 0.00, Memory (MB): 0.00
+D D R U L U R
