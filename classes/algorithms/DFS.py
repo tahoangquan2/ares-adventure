@@ -1,7 +1,5 @@
-from collections import deque
 from ..CharacterMove import CharacterMove
 from ..GameState import GameState
-import asyncio
 
 class DFSSolver:
     def __init__(self, initial_state):
@@ -11,14 +9,11 @@ class DFSSolver:
         self.operation_limit = 10**6
         self.character_move = CharacterMove()
         self.dir_to_char = {
-            (0, 1): 'R',   # right
-            (1, 0): 'D',   # down
-            (0, -1): 'L',  # left
-            (-1, 0): 'U'   # up
+            (0, 1): 'R', (1, 0): 'D',
+            (0, -1): 'L', (-1, 0): 'U'
         }
         self.char_to_dir = {v: k for k, v in self.dir_to_char.items()}
 
-        # Initialize solver state
         self.stack = []
         self.visited = set()
         self.directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -47,94 +42,38 @@ class DFSSolver:
         return new_state
 
     def process_one_state(self):
-        """Process one state from the stack. Returns True if solution found."""
         if not self.stack:
             return False
 
         compressed_current, path = self.stack.pop()
         current_state = self.decompress_state(compressed_current)
 
-        print(len(self.stack))
         if current_state.is_solved():
             self.solution = [self.char_to_dir[c] for c in path]
             self.current_step = -1
             return True
 
         x, y = current_state.player_pos
-        print(x, y)
         for dx, dy in self.directions:
-            print(current_state)
-            tf = self.character_move.can_move(current_state, x, y, dx, dy)
-            print(tf)
-            if tf:
-                print(len(self.stack))
+            if self.character_move.can_move(current_state, x, y, dx, dy):
                 new_state = self.character_move.make_move(current_state, x, y, dx, dy)
-                print(self.visited)
                 compressed_new = self.compress_state(new_state)
-                print(compressed_new)
 
                 if compressed_new not in self.visited:
                     self.visited.add(compressed_new)
                     new_path = path + self.dir_to_char[(dx, dy)]
                     self.stack.append((compressed_new, new_path))
-                    print(new_path)
 
-        print("False")
         return False
 
-    async def solve_async(self):
-        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        compressed_initial = self.compress_state(self.initial_state)
-        visited = {compressed_initial}
-        stack = [(compressed_initial, "")]
-        operations = 0
-        chunk_size = 1000
-
-        while stack and operations < self.operation_limit:
-            # Process a chunk of states
-            for _ in range(chunk_size):
-                if not stack or operations >= self.operation_limit:
-                    break
-
-                operations += 1
-                compressed_current, path = stack.pop()
-                current_state = self.decompress_state(compressed_current)
-
-                if current_state.is_solved():
-                    self.solution = [self.char_to_dir[c] for c in path]
-                    self.current_step = -1
-                    yield {'solved': True, 'operations': operations}
-                    return
-
-                x, y = current_state.player_pos
-                for dx, dy in directions:
-                    if self.character_move.can_move(current_state, x, y, dx, dy):
-                        new_state = self.character_move.make_move(current_state, x, y, dx, dy)
-                        compressed_new = self.compress_state(new_state)
-
-                        if compressed_new not in visited:
-                            visited.add(compressed_new)
-                            new_path = path + self.dir_to_char[(dx, dy)]
-                            stack.append((compressed_new, new_path))
-
-            # Yield control after processing the chunk
-            yield {'solved': False, 'operations': operations}
-            await asyncio.sleep(0)
-
-        yield {'solved': False, 'operations': operations}
-
     def solve(self):
-        """Original synchronous solve method"""
         self.reset_solver()
         operations = 0
 
-        print("solve")
         while self.stack and operations < self.operation_limit:
             operations += 1
-            print(len(self.stack), operations)
             if self.process_one_state():
                 return True
-            print(len(self.stack), operations)
 
         return False
 

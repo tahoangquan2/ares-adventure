@@ -30,11 +30,10 @@ class App:
 
 def main():
     app = App()
-
     try:
         asyncio.run(app.update())
     except RuntimeError:
-        pass  # Ignore runtime error on closing
+        pass
 
 if __name__ == "__main__":
     main()

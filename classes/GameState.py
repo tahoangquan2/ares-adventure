@@ -1,6 +1,5 @@
 class GameState:
     def __init__(self, map_data=None, weight_data=None):
-        # If initialized with map_data, convert from string representation
         if map_data:
             self.width = len(map_data)
             self.height = len(map_data[0]) if self.width > 0 else 0
@@ -8,11 +7,23 @@ class GameState:
         else:
             self.width = 0
             self.height = 0
-            self.walls = set()  # Set of (x, y) wall positions
-            self.switches = set()  # Set of (x, y) switch positions
-            self.stones = {}  # Dictionary of (x, y) -> weight for stones
-            self.player_pos = None  # (x, y) tuple for player position
+            self.walls = set()
+            self.switches = set()
+            self.stones = {}
+            self.player_pos = None
             self.player_on_switch = False
+
+    # Equality check for states
+    def __eq__(self, other):
+        if not isinstance(other, GameState):
+            return False
+        return (self.player_pos == other.player_pos and
+                self.stones == other.stones)
+
+    # Hash for use in sets and as dictionary keys
+    def __hash__(self):
+        stones_tuple = tuple(sorted((pos, weight) for pos, weight in self.stones.items()))
+        return hash((self.player_pos, stones_tuple))
 
     def _init_from_map(self, map_data, weight_data):
         self.walls = set()
@@ -21,7 +32,6 @@ class GameState:
         self.player_pos = None
         self.player_on_switch = False
 
-        weight_idx = 0
         for x in range(self.width):
             for y in range(self.height):
                 cell = map_data[x][y]
@@ -71,36 +81,6 @@ class GameState:
             return '.'
         return ' '
 
-    def to_string(self):
-        """Returns a minimal string representation containing only essential state information:
-        format: "px py s1x s1y s1w s2x s2y s2w ..." where:
-        - px py: player position coordinates
-        - sNx sNy: stone N position coordinates
-        - sNw: stone N weight
-        """
-        # Start with player position
-        parts = [str(self.player_pos[0]), str(self.player_pos[1])]
-
-        # Add stone positions and weights, sorted to ensure consistent representation
-        stone_data = []
-        for pos, weight in sorted(self.stones.items()):
-            stone_data.extend([str(pos[0]), str(pos[1]), str(weight)])
-
-        return ' '.join(parts + stone_data)
-
-    def __eq__(self, other):
-        """Implement equality check for states"""
-        if not isinstance(other, GameState):
-            return False
-        return (self.player_pos == other.player_pos and
-                self.stones == other.stones)
-
-    def __hash__(self):
-        """Implement hash for use in sets and as dictionary keys"""
-        # Convert stones dict to tuple of tuples for hashing
-        stones_tuple = tuple(sorted((pos, weight) for pos, weight in self.stones.items()))
-        return hash((self.player_pos, stones_tuple))
-
     def create_new_state(self, updates, stone_move=None):
         new_state = GameState()
         new_state.width = self.width
@@ -110,21 +90,18 @@ class GameState:
         new_state.stones = self.stones.copy()
         new_state.player_pos = self.player_pos
         new_state.player_on_switch = self.player_on_switch
-        print("create new state 1")
 
         # Apply updates
         if 'player_pos' in updates:
             new_pos = updates['player_pos']
             new_state.player_pos = new_pos
             new_state.player_on_switch = new_pos in new_state.switches
-        print("create new state 1")
 
         if 'stones' in updates:
             old_pos, new_pos = updates['stones']
             if old_pos in new_state.stones:
                 weight = new_state.stones.pop(old_pos)
                 new_state.stones[new_pos] = weight
-        print("create new state 2")
 
         return new_state
 

@@ -1,4 +1,3 @@
-import asyncio
 from ..CharacterMove import CharacterMove
 from ..GameState import GameState
 from heapq import heappop, heappush
@@ -16,7 +15,6 @@ class UCSSolver:
         }
         self.char_to_dir = {v: k for k, v in self.dir_to_char.items()}
 
-        # Initialize solver state
         self.directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         self.index = 0
         self.reset_solver()
@@ -68,28 +66,6 @@ class UCSSolver:
                     heappush(self.priority_queue, (cost + 1, self.index, compressed_new, new_path))
 
         return False
-
-    async def solve_async(self):
-        self.reset_solver()
-        operations = 0
-        chunk_size = 1000
-
-        while operations < self.operation_limit:
-            # Process a chunk of states
-            for _ in range(chunk_size):
-                if not self.priority_queue or operations >= self.operation_limit:
-                    break
-
-                operations += 1
-                if self.process_one_state():
-                    yield {'solved': True, 'operations': operations}
-                    return
-
-            # Yield control after processing the chunk
-            yield {'solved': False, 'operations': operations}
-            await asyncio.sleep(0)
-
-        yield {'solved': False, 'operations': operations}
 
     def solve(self):
         self.reset_solver()

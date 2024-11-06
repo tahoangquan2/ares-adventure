@@ -1,7 +1,6 @@
 from collections import deque
 from ..CharacterMove import CharacterMove
 from ..GameState import GameState
-import asyncio
 
 class BFSSolver:
     def __init__(self, initial_state):
@@ -11,21 +10,17 @@ class BFSSolver:
         self.operation_limit = 10**6
         self.character_move = CharacterMove()
         self.dir_to_char = {
-            (0, 1): 'R',   # right
-            (1, 0): 'D',   # down
-            (0, -1): 'L',  # left
-            (-1, 0): 'U'   # up
+            (0, 1): 'R', (1, 0): 'D',
+            (0, -1): 'L', (-1, 0): 'U'
         }
         self.char_to_dir = {v: k for k, v in self.dir_to_char.items()}
 
-        # Initialize solver state
         self.queue = deque()
         self.visited = set()
         self.directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         self.reset_solver()
 
     def reset_solver(self):
-        """Reset solver to initial state"""
         compressed_initial = self.compress_state(self.initial_state)
         self.queue = deque([(compressed_initial, "")])
         self.visited = {compressed_initial}
@@ -47,7 +42,6 @@ class BFSSolver:
         return new_state
 
     def process_one_state(self):
-        """Process one state from the queue. Returns True if solution found."""
         if not self.queue:
             return False
 
@@ -68,55 +62,11 @@ class BFSSolver:
                 if compressed_new not in self.visited:
                     self.visited.add(compressed_new)
                     new_path = path + self.dir_to_char[(dx, dy)]
-                    if len(self.queue) % 1000 == 0:
-                        print(len(self.queue), compressed_new, new_path)
                     self.queue.append((compressed_new, new_path))
 
         return False
 
-    async def solve_async(self):
-        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        compressed_initial = self.compress_state(self.initial_state)
-        visited = {compressed_initial}
-        queue = deque([(compressed_initial, "")])
-        operations = 0
-        chunk_size = 1000  # Process this many states before yielding
-
-        while queue and operations < self.operation_limit:
-            # Process a chunk of states
-            for _ in range(chunk_size):
-                if not queue or operations >= self.operation_limit:
-                    break
-
-                operations += 1
-                compressed_current, path = queue.popleft()
-                current_state = self.decompress_state(compressed_current)
-
-                if current_state.is_solved():
-                    self.solution = [self.char_to_dir[c] for c in path]
-                    self.current_step = -1
-                    yield {'solved': True, 'operations': operations}
-                    return
-
-                x, y = current_state.player_pos
-                for dx, dy in directions:
-                    if self.character_move.can_move(current_state, x, y, dx, dy):
-                        new_state = self.character_move.make_move(current_state, x, y, dx, dy)
-                        compressed_new = self.compress_state(new_state)
-
-                        if compressed_new not in visited:
-                            visited.add(compressed_new)
-                            new_path = path + self.dir_to_char[(dx, dy)]
-                            queue.append((compressed_new, new_path))
-
-            # Yield control after processing the chunk
-            yield {'solved': False, 'operations': operations}
-            await asyncio.sleep(0)
-
-        yield {'solved': False, 'operations': operations}
-
     def solve(self):
-        """Original synchronous solve method"""
         self.reset_solver()
         operations = 0
 
