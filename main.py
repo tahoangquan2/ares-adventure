@@ -3,28 +3,38 @@ import asyncio
 from classes.DrawGUI import DrawGUI
 from classes.Core import Core
 
-async def update(root):
-    while True:
-        root.update()
-        await asyncio.sleep(1/120)  # ~120 FPS
+class App:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.resizable(True, True)
+        self.root.minsize(1024, 600)
+
+        self.gui = DrawGUI(self.root)
+        self.core = Core(self.gui)
+
+        self.running = True
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def on_closing(self):
+        self.running = False
+        self.root.quit()
+        self.root.destroy()
+
+    async def update(self, interval=1/120):
+        while self.running:
+            try:
+                self.root.update()
+                await asyncio.sleep(interval)
+            except tk.TclError:
+                break
 
 def main():
-    root = tk.Tk()
-    root.resizable(True, True)
-    root.minsize(1024, 600)
+    app = App()
 
-    gui = DrawGUI(root)
-    core = Core(gui)
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
     try:
-        loop.run_until_complete(update(root))
-    except tk.TclError:
-        # Window was closed
-        pass
-    finally:
-        loop.close()
+        asyncio.run(app.update())
+    except RuntimeError:
+        pass  # Ignore runtime error on closing
 
 if __name__ == "__main__":
     main()
