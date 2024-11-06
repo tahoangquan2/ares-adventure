@@ -18,6 +18,7 @@ class Core:
         self.current_step = 0
         self.total_weight = 0
         self.play_speed = 200
+        self.current_task = None  # Track current solving task
 
         self.setup_bindings()
         self.load_level("1")
@@ -72,16 +73,19 @@ class Core:
         self.reset_solve_state()
 
     def on_level_change(self):
+        if self.current_task:
+            self.current_task.cancel()  # Cancel any running solve task
+            self.current_task = None
         level = self.gui.selected_level.get()
         self.reset_full_state()
         self.load_level(level)
 
     def on_algorithm_change(self):
-        # First stop any ongoing playback
+        if self.current_task:
+            self.current_task.cancel()  # Cancel any running solve task
+            self.current_task = None
         self.stop_playback()
-        # Then reset the solver state
         self.reset_full_state()
-        # Redraw the initial state
         level = self.gui.selected_level.get()
         self.load_level(level)
 
@@ -104,44 +108,57 @@ class Core:
         if not self.current_state:
             return
 
-        if self.gui.selected_algorithm.get() == "bfs":
-            self.solver = BFSSolver(self.current_state)
-        elif self.gui.selected_algorithm.get() == "dfs":
-            self.solver = DFSSolver(self.current_state)
-        elif self.gui.selected_algorithm.get() == "ucs":
-            self.solver = UCSSolver(self.current_state)
-        else:
-            self.solver = AStarSolver(self.current_state)
+        try:
+            if self.gui.selected_algorithm.get() == "bfs":
+                self.solver = BFSSolver(self.current_state)
+            elif self.gui.selected_algorithm.get() == "dfs":
+                self.solver = DFSSolver(self.current_state)
+            elif self.gui.selected_algorithm.get() == "ucs":
+                self.solver = UCSSolver(self.current_state)
+            else:
+                self.solver = AStarSolver(self.current_state)
 
-        operations = 0
-        chunk_size = 1000
+            operations = 0
+            chunk_size = 1000
 
-        while operations < self.solver.operation_limit:
-            # Process a chunk of states
-            for _ in range(chunk_size):
-                operations += 1
-                if self.solver.process_one_state():  # Solution found
-                    self.is_solved = True
-                    self.gui.play_button.config(state='normal')
-                    self.gui.next_button.config(state='normal')
-                    self.gui.solve_button.config(state='disabled')
-                    return True
+            while operations < self.solver.operation_limit:
+                # Process a chunk of states
+                for _ in range(chunk_size):
+                    operations += 1
+                    if self.solver.process_one_state():  # Solution found
+                        self.is_solved = True
+                        self.gui.play_button.config(state='normal')
+                        self.gui.next_button.config(state='normal')
+                        self.gui.solve_button.config(state='disabled')
+                        return True
 
-                if operations >= self.solver.operation_limit:
-                    break
+                    if not self.solver.queue:  # No more states to process
+                        break
 
-            # Yield control to prevent freezing
-            await asyncio.sleep(0)
+                # Yield control to prevent freezing
+                await asyncio.sleep(0)
 
-        self.show_error_popup("Cannot solve the puzzle after 1000000 (1e6) operations.")
-        self.gui.solve_button.config(state='disabled')
-        return False
+            self.show_error_popup("Cannot solve the puzzle after 1000000 (1e6) operations.")
+            self.gui.solve_button.config(state='disabled')
+            return False
+
+        except asyncio.CancelledError:
+            # Clean up when task is cancelled
+            self.solver = None
+            self.gui.solve_button.config(state='normal')
+            raise  # Re-raise to properly handle cancellation
 
     def start_solve(self):
+        if self.current_task:
+            self.current_task.cancel()
+        self.current_task = asyncio.create_task(self.solve_puzzle())
         self.gui.solve_button.config(state='disabled')
-        asyncio.create_task(self.solve_puzzle())
 
     def reset_solve_state(self):
+        if self.current_task:
+            self.current_task.cancel()
+            self.current_task = None
+
         self.is_playing = False
         self.is_solved = False
         self.solver = None
