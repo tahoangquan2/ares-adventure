@@ -1,6 +1,8 @@
 from ..CharacterMove import CharacterMove
 from ..GameState import GameState
 from heapq import heappop, heappush
+from scipy.optimize import linear_sum_assignment
+
 
 class AStarSolver:
     def __init__(self, initial_state):
@@ -114,3 +116,37 @@ class AStarSolver:
             return None
 
         return self.solution[self.current_step]
+
+    def heuristic(self, state):
+        box_positions = state.get_boxes()
+        goal_positions = state.get_goals()
+
+        # Calculate Manhattan distance for each box to its closest goal, factoring in weights
+        box_goal_distance = sum(
+            min((abs(box[0] - goal[0]) + abs(box[1] - goal[1])) * (state.get_weight(box[0], box[1]) + 1) for goal in goal_positions)
+            for box_index, box in enumerate(box_positions)
+        )
+
+        return box_goal_distance
+
+    def heuristic_Hungarian_Algo(self, state):
+        box_positions = state.get_boxes()
+        goal_positions = state.get_goals()
+
+        # Initialize the cost matrix with dimensions [num_boxes x num_goals]
+        cost_matrix = []
+        for box in box_positions:
+            box_costs = []
+            for goal in goal_positions:
+                distance = abs(box[0] - goal[0]) + abs(box[1] - goal[1])
+                weight = state.get_weight(box[0], box[1])
+                box_costs.append(distance * (weight + 1))  # Factor in weight + 1
+            cost_matrix.append(box_costs)
+
+        # Apply Hungarian algorithm to find minimum cost assignment
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+
+        # Sum up the minimum costs for each assigned box-goal pair
+        total_cost = sum(cost_matrix[row][col] for row, col in zip(row_ind, col_ind))
+
+        return total_cost
