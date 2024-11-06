@@ -1,6 +1,8 @@
 from collections import deque
 from ..CharacterMove import CharacterMove
 from heapq import heappop, heappush
+from scipy.optimize import linear_sum_assignment
+
 
 class AStarSolver:
     def __init__(self, initial_state):
@@ -42,7 +44,8 @@ class AStarSolver:
                 if self.can_move(current_state, x, y, dx, dy):
                     new_state = self.make_move(current_state, x, y, dx, dy)
                     new_g = g + 1  # Incremental cost for the move
-                    new_h = self.heuristic(new_state)  # Heuristic estimate to goal
+                    # new_h = self.heuristic(new_state)  # Heuristic estimate to goal
+                    new_h = self.heuristic_Hungarian_Algo(new_state)  # Hungarian Algorithm Heuristic estimate to goal
                     new_f = new_g + new_h  # Total estimated cost
                     index += 1
                     heappush(priority_queue, (new_f, new_g, index, new_state, path + [(dx, dy)]))
@@ -77,3 +80,25 @@ class AStarSolver:
         )
 
         return box_goal_distance
+
+    def heuristic_Hungarian_Algo(self, state):
+        box_positions = state.get_boxes()
+        goal_positions = state.get_goals()
+
+        # Initialize the cost matrix with dimensions [num_boxes x num_goals]
+        cost_matrix = []
+        for box in box_positions:
+            box_costs = []
+            for goal in goal_positions:
+                distance = abs(box[0] - goal[0]) + abs(box[1] - goal[1])
+                weight = state.get_weight(box[0], box[1])
+                box_costs.append(distance * (weight + 1))  # Factor in weight + 1
+            cost_matrix.append(box_costs)
+        
+        # Apply Hungarian algorithm to find minimum cost assignment
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+        
+        # Sum up the minimum costs for each assigned box-goal pair
+        total_cost = sum(cost_matrix[row][col] for row, col in zip(row_ind, col_ind))
+
+        return total_cost
