@@ -7,19 +7,27 @@ class AlgorithmMetrics:
         self.start_time = None
         self.end_time = None
         self.start_memory = None
-        self.end_memory = None
+        self.peak_memory = 0  # Track peak memory instead of end memory
         self.nodes_explored = 0
         self.total_steps = 0
         self.total_weight = 0
         self.solution_path = ""
+        self.process = psutil.Process(os.getpid())
 
     def start_tracking(self):
         self.start_time = time.time()
-        self.start_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        self.start_memory = self.process.memory_info().rss
+        self.peak_memory = self.start_memory
+
+    def update_peak_memory(self):
+        current_memory = self.process.memory_info().rss
+        if current_memory > self.peak_memory:
+            self.peak_memory = current_memory
 
     def stop_tracking(self):
         self.end_time = time.time()
-        self.end_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        # One final check when stopping
+        self.update_peak_memory()
 
     def get_execution_time_ms(self):
         if self.start_time and self.end_time:
@@ -27,12 +35,10 @@ class AlgorithmMetrics:
         return 0
 
     def get_memory_usage_mb(self):
-        if self.start_memory and self.end_memory:
-            return self.end_memory - self.start_memory
-        return 0
+        # Convert to MB
+        return (self.peak_memory - self.start_memory) / 1024 / 1024
 
     def format_solution_path(self):
-        # Add space between each move character
         return ' '.join(list(self.solution_path))
 
     def save_to_file(self, algorithm_name, level_number):
@@ -40,7 +46,7 @@ class AlgorithmMetrics:
 
         # Use 'a' mode to append to the file
         with open(output_filename, 'a') as f:
-            # If file is empty then will not add an extra newline at the start
+            # If file is empty, don't add an extra newline at the start
             if os.path.getsize(output_filename) > 0:
                 f.write('\n')
             f.write(f"{algorithm_name}\n")

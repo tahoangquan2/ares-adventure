@@ -52,6 +52,9 @@ class DFSSolver:
         current_state = self.decompress_state(compressed_current)
         self.metrics.nodes_explored += 1
 
+        # Update peak memory after processing each state
+        self.metrics.update_peak_memory()
+
         if current_state.is_solved():
             self.solution = [self.char_to_dir[c] for c in path]
             self.current_step = -1
