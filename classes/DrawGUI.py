@@ -33,13 +33,13 @@ class DrawGUI:
 
         # New radio button styles
         style.configure('Sidebar.TRadiobutton',
-                       background='#34495e',
-                       foreground='white',
-                       font=('Helvetica', 11),
-                       padding=5)
+                        background='#34495e',
+                        foreground='white',
+                        font=('Helvetica', 11),
+                        padding=5)
         style.map('Sidebar.TRadiobutton',
-                 background=[('selected', '#3498db'), ('active', '#2980b9')],
-                 foreground=[('selected', 'white'), ('active', 'white')])
+                background=[('selected', '#3498db'), ('active', '#2980b9')],
+                foreground=[('selected', 'white'), ('active', 'white')])
 
     def setup_window(self):
         self.root.geometry("1280x720")
@@ -143,31 +143,46 @@ class DrawGUI:
         button_frame = ttk.Frame(control_container, style='Controls.TFrame')
         button_frame.pack()
 
+        self.back_button = ttk.Button(button_frame,
+                                    text="Back",
+                                    style='Modern.TButton',
+                                    command=self.on_back_pressed,
+                                    width=15)
+        self.back_button.pack(side=tk.LEFT, padx=5)
+
         self.solve_button = ttk.Button(button_frame,
-                                     text="Solve Puzzle",
-                                     style='Modern.TButton',
-                                     width=15)
+                                    text="Solve Puzzle",
+                                    style='Modern.TButton',
+                                    width=15)
         self.solve_button.pack(side=tk.LEFT, padx=5)
 
+        # Create but don't pack the play and next buttons initially
         self.play_button = ttk.Button(button_frame,
                                     text="Play",
                                     style='Modern.TButton',
-                                    width=15,
-                                    state='disabled')
-        self.play_button.pack(side=tk.LEFT, padx=5)
+                                    width=15)
 
         self.next_button = ttk.Button(button_frame,
                                     text="Next Step",
                                     style='Modern.TButton',
-                                    width=15,
-                                    state='disabled')
-        self.next_button.pack(side=tk.LEFT, padx=5)
+                                    width=15)
 
         weight_label = ttk.Label(control_container,
                                textvariable=self.weight_var,
                                font=('Helvetica', 12),
                                style='Controls.TLabel')
         weight_label.pack(pady=(10, 0))
+
+    def on_back_pressed(self):
+        for widget in self.main_container.winfo_children():
+            widget.pack_forget()
+
+        self.main_container.pack_forget()
+        for widget in self.root.winfo_children():
+            if isinstance(widget, ttk.Frame) and (not hasattr(widget, 'frame') or widget != self.menu_screen.frame):
+                widget.pack_forget()
+        if hasattr(self, 'menu_screen'):
+            self.menu_screen.show()
 
     def draw_state(self, state):
         self.canvas.delete("all")

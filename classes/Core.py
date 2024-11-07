@@ -124,9 +124,14 @@ class Core:
                     operations += 1
                     if self.solver.process_one_state():
                         self.is_solved = True
-                        self.gui.play_button.config(state='normal')
-                        self.gui.next_button.config(state='normal')
-                        self.gui.solve_button.config(state='disabled')
+                        # Show play and next buttons, hide solve button
+                        self.gui.solve_button.pack_forget()
+                        self.gui.play_button.pack(side=tk.LEFT, padx=5)
+                        self.gui.next_button.pack(side=tk.LEFT, padx=5)
+
+                        # Save metrics after successful solve
+                        level_number = self.gui.selected_level.get()
+                        self.solver.save_metrics(level_number)
                         return True
 
                     if not data_structure:
@@ -136,13 +141,14 @@ class Core:
                 await asyncio.sleep(0)
 
             self.show_error_popup("Cannot solve the puzzle after 1,000,000 operations.")
-            self.gui.solve_button.config(state='disabled')
+            self.gui.solve_button.pack_forget()
             return False
 
         # Clean up when task is cancelled
         except asyncio.CancelledError:
             self.solver = None
-            self.gui.solve_button.config(state='normal')
+            self.gui.solve_button.config(text="Solve Puzzle")
+            self.gui.solve_button.pack(side=tk.LEFT, padx=5)
             # Re-raise to properly handle cancellation
             raise
 
@@ -150,6 +156,7 @@ class Core:
         if self.current_task:
             self.current_task.cancel()
         self.current_task = asyncio.create_task(self.solve_puzzle())
+        self.gui.solve_button.config(text="Solving...")
         self.gui.solve_button.config(state='disabled')
 
     def reset_solve_state(self):
@@ -164,9 +171,15 @@ class Core:
         self.total_weight = 0
 
         self.gui.weight_var.set("Total Weight: 0       Step: 0")
+        # Show solve button
+        self.gui.solve_button.pack(side=tk.LEFT, padx=5)
+        self.gui.solve_button.config(text="Solve Puzzle")
         self.gui.solve_button.config(state='normal')
-        self.gui.play_button.config(text="Play", state='disabled')
-        self.gui.next_button.config(state='disabled')
+        # Unpack play and next buttons if they were packed
+        self.gui.play_button.pack_forget()
+        self.gui.next_button.pack_forget()
+        self.gui.play_button.config(state='normal')
+        self.gui.next_button.config(state='normal')
 
     def reset_full_state(self):
         self.current_state = None
@@ -176,7 +189,8 @@ class Core:
         if self.is_playing:
             self.is_playing = False
             self.gui.play_button.config(text="Play")
-            self.gui.next_button.config(state='normal')
+            # Show next button
+            self.gui.next_button.pack(side=tk.LEFT, padx=5)
 
     # Execute the next step in the solution
     def next_step(self):
@@ -209,6 +223,9 @@ class Core:
                     self.current_state = self.solver.make_move(self.current_state, y, x, dy, dx)
                     self.gui.draw_state(self.current_state)
                     return True
+        else:
+            self.gui.play_button.config(state='disabled')
+            self.gui.next_button.config(state='disabled')
         return False
 
     # Toggle between play and pause states
