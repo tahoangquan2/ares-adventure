@@ -1,11 +1,15 @@
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageTk
 
 class DrawGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Ares Stone Game")
 
+
+        self.original_wall_image = Image.open("D:/APCSDoc/Nam3/HK1/AI/Project/ares-adventure/classes/brick_wall-red.png")
+        #self.wall_image = ImageTk.PhotoImage(self.original_wall_image.resize((50, 50), Image.Resampling.LANCZOS))
         # Initialize variables before setup
         self.selected_level = tk.StringVar()
         self.selected_algorithm = tk.StringVar()
@@ -189,32 +193,47 @@ class DrawGUI:
             self.menu_screen.show()
 
 
-
     def draw_state(self, state):
         self.canvas.delete("all")
         if not state.map:
             return
 
+        # Get canvas dimensions
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
-        map_height = len(state.map[0])
-        map_width = len(state.map)
+        print("Canvas width:", canvas_width)
+        print("Canvas height:", canvas_height)
 
-        cell_width = canvas_width / (map_width + 2)
-        cell_height = canvas_height / (map_height + 2)
-        cell_size = min(cell_width, cell_height)
+        # Calculate map dimensions based on the state's map structure
+        map_width = len(state.map)  # Number of rows
+        map_height = len(state.map[0]) if map_width > 0 else 0  # Number of columns
+        print("Map width:", map_width)
+        print("Map height:", map_height)
 
-        x_offset = (canvas_width - (map_width * cell_size)) / 2
-        y_offset = (canvas_height - (map_height * cell_size)) / 2
+        # Calculate cell size to fit map within canvas, maintaining padding and aspect ratio
+        cell_width = canvas_width / (map_width + 2)  # Adjusted for dynamic width scaling
+        cell_height = canvas_height / (map_height + 2)  # Adjusted for dynamic height scaling
+        cell_size = min(cell_width, cell_height)  # Adjusted to keep cell size consistent
+        print("Cell width:", cell_width)
+        print("Cell height:", cell_height)
+        print("Cell size:", cell_size)
 
+        # Calculate offsets to center the map within the canvas
+        x_offset = (canvas_width - (map_width * cell_size)) / 2  # Center map horizontally
+        y_offset = (canvas_height - (map_height * cell_size)) / 2  # Center map vertically
+
+        # Define colors for different elements
         colors = {
             '#': '#34495e',  # Wall
             '$': '#e67e22',  # Stone
-            '@': '#e74c3c',  # Ares
+            '@': '#e74c3c',  # Ares (character)
             '.': '#f1c40f',  # Switch
-            ' ': '#ffffff'   # Empty
+            ' ': '#ffffff'   # Empty space
         }
 
+        self.wall_images = {}  
+
+        # Draw each element on the map with appropriate scaling
         for y in range(map_height):
             for x in range(map_width):
                 char = state.map[x][y]
@@ -223,12 +242,23 @@ class DrawGUI:
                 x2 = x1 + cell_size
                 y2 = y1 + cell_size
 
-                padding = cell_size * 0.2
+                # Padding for objects, dynamically scaled with cell size
+                # Calculate padding based on the map size (adjustable factor)
+                padding = cell_size * 0.1
+
+                print("Paddingasasas:", padding)
+                # Proportionally adjust padding to cell size
                 x1p, y1p = x1 + padding, y1 + padding
                 x2p, y2p = x2 - padding, y2 - padding
 
                 if char == '#':
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill=colors['#'], width=0)
+                    wall_image_resized = self.original_wall_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS)
+                    wall_image = ImageTk.PhotoImage(wall_image_resized)
+                    self.wall_images[(x, y)] = wall_image  
+                    self.canvas.create_image(x1, y1, image=wall_image, anchor="nw")
+
+                    # self.canvas.create_rectangle(x1, y1, x2, y2, fill=colors['#'], width=0)
+
                 elif char in ['$', '*']:
                     self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['$'], width=0)
                     if char == '*':
@@ -237,16 +267,15 @@ class DrawGUI:
                     if weight > 0:
                         text_x = (x1 + x2) / 2
                         text_y = (y1 + y2) / 2
-                        self.canvas.create_text(text_x, text_y,
-                                             text=str(weight),
-                                             fill='white',
-                                             font=('Helvetica', int(cell_size / 3)))
+                        self.canvas.create_text(
+                            text_x, text_y,
+                            text=str(weight),
+                            fill='white',
+                            font=('Helvetica', int(cell_size / 3))  # Font size scaled with cell size
+                        )
                 elif char == '@':
                     self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['@'], width=0)
                 elif char == '.':
                     self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['.'], width=0)
                 elif char == '+':
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p,
-                                         fill=colors['@'],
-                                         outline=colors['.'],
-                                         width=3)
+                    self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['@'], outline=colors['.'], width=3)
