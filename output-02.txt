@@ -1,3 +1,6 @@
 BFS
 Steps: 5, Weight: 8, Nodes: 19, Time (ms): 0.00, Memory (MB): 0.00
 DrurD
+A*
+Steps: 5, Weight: 8, Nodes: 16, Time (ms): 0.00, Memory (MB): 0.00
+DrurD

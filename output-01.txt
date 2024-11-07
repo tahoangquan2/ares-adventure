@@ -10,3 +10,9 @@ uLulDrrRRRRRRurD
 UCS
 Steps: 24, Weight: 429, Nodes: 36421, Time (ms): 560.84, Memory (MB): 8.46
 lluRurrDrdLLLuRRRRRRRurD
+A*
+Steps: 24, Weight: 429, Nodes: 2180, Time (ms): 59.38, Memory (MB): 1.43
+lluRurrDrdLLLuRRRRRRRurD
+UCS
+Steps: 24, Weight: 429, Nodes: 36421, Time (ms): 555.87, Memory (MB): 14.47
+lluRurrDrdLLLuRRRRRRRurD
