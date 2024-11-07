@@ -11,10 +11,13 @@ class BFSSolver:
         self.operation_limit = 10**6
         self.character_move = CharacterMove()
         self.dir_to_char = {
-            (0, 1): 'R', (1, 0): 'D',
-            (0, -1): 'L', (-1, 0): 'U'
+            (0, 1): 'D', (1, 0): 'R',
+            (0, -1): 'U', (-1, 0): 'L'
         }
-        self.char_to_dir = {v: k for k, v in self.dir_to_char.items()}
+        self.char_to_dir = {
+            'D': (0, 1), 'U': (0, -1), 'L': (-1, 0), 'R': (1, 0),
+            'd': (0, 1), 'u': (0, -1), 'l': (-1, 0), 'r': (1, 0)
+        }
 
         self.metrics = AlgorithmMetrics()
         self.queue = deque()
@@ -24,7 +27,7 @@ class BFSSolver:
 
     def reset_solver(self):
         compressed_initial = self.compress_state(self.initial_state)
-        self.queue = deque([(compressed_initial, "", 0)])  # Added weight tracking
+        self.queue = deque([(compressed_initial, "", 0)])
         self.visited = {compressed_initial}
         self.metrics = AlgorithmMetrics()
         self.metrics.start_tracking()
@@ -73,15 +76,22 @@ class BFSSolver:
 
                 if compressed_new not in self.visited:
                     self.visited.add(compressed_new)
-                    new_path = path + self.dir_to_char[(dx, dy)]
 
-                    # Calculate weight for this move
-                    additional_weight = 1
+                    # Determine if this move is a push
                     new_pos = (x + dx, y + dy)
-                    if new_pos in current_state.stones:
-                        additional_weight += current_state.get_weight(*new_pos)
+                    is_push = new_pos in current_state.stones
 
-                    self.queue.append((compressed_new, new_path, current_weight + additional_weight))
+                    # Get the direction character
+                    dir_char = self.dir_to_char[(dx, dy)]
+                    dir_char = dir_char.upper() if is_push else dir_char.lower()
+                    new_path = path + dir_char
+
+                    # Calculate weight
+                    move_weight = 1
+                    if is_push:
+                        move_weight += current_state.get_weight(*new_pos)
+
+                    self.queue.append((compressed_new, new_path, current_weight + move_weight))
 
         return False
 
