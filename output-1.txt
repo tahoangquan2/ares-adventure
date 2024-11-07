@@ -1,0 +1,54 @@
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1772.65, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1786.71, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1781.33, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1749.85, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1750.20, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1881.48, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1827.84, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1703.42, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1738.42, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1795.26, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1732.81, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1765.41, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1750.20, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1827.60, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1824.49, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1796.68, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1968.50, Memory (MB): 22.96
+U L U L D R R R R R R R R U R D
+BFS
+Steps: 16, Weight: 117, Nodes: 35680, Time (ms): 1816.85, Memory (MB): 22.97
+U L U L D R R R R R R R R U R D

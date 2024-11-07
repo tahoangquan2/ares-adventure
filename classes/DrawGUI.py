@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageTk
 
 class DrawGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Ares Stone Game")
-
+        self.load_images()
         # Initialize variables before setup
         self.selected_level = tk.StringVar()
         self.selected_algorithm = tk.StringVar()
@@ -143,10 +144,17 @@ class DrawGUI:
         button_frame = ttk.Frame(control_container, style='Controls.TFrame')
         button_frame.pack()
 
+        self.back_button = ttk.Button(button_frame,
+                                    text="Back",
+                                    style='Modern.TButton',
+                                    command=self.on_back_pressed,
+                                    width=15)
+        self.back_button.pack(side=tk.LEFT, padx=5)
+
         self.solve_button = ttk.Button(button_frame,
-                                     text="Solve Puzzle",
-                                     style='Modern.TButton',
-                                     width=15)
+                                    text="Solve Puzzle",
+                                    style='Modern.TButton',
+                                    width=15)
         self.solve_button.pack(side=tk.LEFT, padx=5)
 
         self.play_button = ttk.Button(button_frame,
@@ -164,10 +172,30 @@ class DrawGUI:
         self.next_button.pack(side=tk.LEFT, padx=5)
 
         weight_label = ttk.Label(control_container,
-                               textvariable=self.weight_var,
-                               font=('Helvetica', 12),
-                               style='Controls.TLabel')
+                                textvariable=self.weight_var,
+                                font=('Helvetica', 12),
+                                style='Controls.TLabel')
         weight_label.pack(pady=(10, 0))
+
+
+    def on_back_pressed(self):
+        for widget in self.main_container.winfo_children():
+            widget.pack_forget()
+
+        self.main_container.pack_forget()
+        for widget in self.root.winfo_children():
+            if isinstance(widget, ttk.Frame) and (not hasattr(widget, 'frame') or widget != self.menu_screen.frame):
+                widget.pack_forget()
+        if hasattr(self, 'menu_screen'):
+            self.menu_screen.show()
+
+    def load_images(self):
+        # Tải các hình ảnh cần thiết và chuyển đổi sang ImageTk
+        self.image_wall = ImageTk.PhotoImage(Image.open("data/assets/Tiles/tile_0000.png"))
+        self.image_stone = ImageTk.PhotoImage(Image.open("data/assets/Tiles/tile_0001.png"))
+        self.image_ares = ImageTk.PhotoImage(Image.open("data/assets/Tiles/Characters/tile_0000.png"))
+        self.image_switch = ImageTk.PhotoImage(Image.open("data/assets/Tiles/tile_0002.png"))
+        self.image_empty = ImageTk.PhotoImage(Image.open("data/assets/Tiles/tile_0003.png"))
 
     def draw_state(self, state):
         self.canvas.delete("all")
