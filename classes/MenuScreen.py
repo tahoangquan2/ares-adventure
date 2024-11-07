@@ -1,6 +1,7 @@
 import tkinter as tk
 from classes.RoundedButton import RoundedButton
 from classes.RoundedButton import RoundedFrame
+
 class MenuScreen:
     def __init__(self, root, on_search_click):
         self.root = root

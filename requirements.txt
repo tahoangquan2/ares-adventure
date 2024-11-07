@@ -1,0 +1,4 @@
+tkinter
+asyncio
+psutil
+scipy
