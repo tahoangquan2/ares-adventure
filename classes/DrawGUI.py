@@ -26,9 +26,7 @@ class DrawGUI:
         self.setup_window()
         self.create_gui_elements()
 
-        # Set default algorithm to BFS
         self.selected_algorithm.set("bfs")
-        # Set default level to 1
         self.selected_level.set("1")
 
     def setup_styles(self):
@@ -74,7 +72,6 @@ class DrawGUI:
         levels_container = ttk.Frame(sidebar, style='Sidebar.TFrame')
         levels_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 20))
 
-        # Create scrollable frame for levels
         canvas = tk.Canvas(levels_container, bg='#34495e', highlightthickness=0)
         scrollbar = ttk.Scrollbar(levels_container, orient=tk.VERTICAL, command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas, style='Sidebar.TFrame')
@@ -87,7 +84,6 @@ class DrawGUI:
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=220)
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Add radio buttons for levels
         for i in range(1, 11):
             level_radio = ttk.Radiobutton(
                 scrollable_frame,
@@ -101,7 +97,6 @@ class DrawGUI:
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Configure canvas scrolling
         canvas.bind('<Enter>', lambda e: canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(-1*(e.delta//120), "units")))
         canvas.bind('<Leave>', lambda e: canvas.unbind_all("<MouseWheel>"))
 
@@ -204,20 +199,16 @@ class DrawGUI:
         if not state.map:
             return
 
-        # Calculate dimensions
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
-
 
         map_width = len(state.map)
         map_height = len(state.map[0])
 
-        # Determine cell size based on map and canvas size
         cell_width = canvas_width / (map_width + 2)
         cell_height = canvas_height / (map_height + 2)
         cell_size = min(cell_width, cell_height)
 
-        # Resize images based on cell size
         self.wall_photo = ImageTk.PhotoImage(self.wall_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
         self.stone_photo = ImageTk.PhotoImage(self.stone_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
         self.ares_photo = ImageTk.PhotoImage(self.ares_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
@@ -226,11 +217,9 @@ class DrawGUI:
         self.surround_photo = ImageTk.PhotoImage(self.surround_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))       
         #self.stone_on_switch_photo = ImageTk.PhotoImage(self.stone_on_switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
 
-        # Center map within the canvas
         x_offset = (canvas_width - (map_width * cell_size)) / 2
         y_offset = (canvas_height - (map_height * cell_size)) / 2
 
-        # Draw each element based on the character in the map
         for y in range(map_height):
             for x in range(map_width):
                 char = state.map[x][y]
@@ -240,11 +229,9 @@ class DrawGUI:
                 self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.empty_photo, anchor=tk.CENTER)
 
                 if char == '#':
-                    # Draw the wall image
                     self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.wall_photo, anchor=tk.CENTER)
 
                 elif char == '$':
-                    # Draw the stone image with weight
                     self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_photo, anchor=tk.CENTER)
                     weight = state.get_weight(x, y)
                     if weight > 0:
@@ -256,7 +243,6 @@ class DrawGUI:
                         )
 
                 elif char == '*':
-                    # Draw the stone on switch image with weight
                     #self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_on_switch_photo, anchor=tk.CENTER)
                     self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.surround_photo, anchor=tk.CENTER)
                     self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_photo, anchor=tk.CENTER)
@@ -275,7 +261,4 @@ class DrawGUI:
                 elif char == '.':
                     self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.surround_photo, anchor=tk.CENTER)
                     self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.switch_photo, anchor=tk.CENTER)
-
-                # elif char == ' ':
-                #     self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.empty_photo, anchor=tk.CENTER)
 
