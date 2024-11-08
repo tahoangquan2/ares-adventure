@@ -8,24 +8,29 @@ class DrawGUI:
         self.root = root
         self.root.title("Ares Stone Game")
 
-        current_dir = os.path.dirname(__file__)
-        self.wall_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Blocks/block_01.png"))
-        self.stone_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Stone/tile000.png"))
-        self.ares_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Player/player_03.png"))
-        self.switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Environment/environment_10.png"))
-        self.empty_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Ground/ground_04.png"))
-        self.surround_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Environment/environment_06.png"))
-        #self.stone_on_switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Stone/tile000.png"))
-
+        # Initialize variables
         self.selected_level = tk.StringVar()
         self.selected_algorithm = tk.StringVar()
         self.weight_var = tk.StringVar(value="Total Weight: 0       Step: 0")
+
+        # Load images
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            self.wall_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Blocks/block_01.png"))
+            self.stone_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Stone/tile000.png"))
+            self.ares_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Player/player_03.png"))
+            self.switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Environment/environment_10.png"))
+            self.empty_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Ground/ground_04.png"))
+            self.surround_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Environment/environment_06.png"))
+        except Exception as e:
+            raise
 
         # Create GUI elements
         self.setup_styles()
         self.setup_window()
         self.create_gui_elements()
 
+        # Set defaults
         self.selected_algorithm.set("bfs")
         self.selected_level.set("1")
 
@@ -55,7 +60,7 @@ class DrawGUI:
         self.main_container = ttk.Frame(self.root, style='Game.TFrame')
         self.main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-    def create_gui_elements(self): 
+    def create_gui_elements(self):
         self.create_left_sidebar()
         self.create_game_display()
         self.create_right_sidebar()
@@ -152,7 +157,7 @@ class DrawGUI:
                                     text="Back",
                                     style='Modern.TButton',
                                     command=self.on_back_pressed,
-                                    width=15)  
+                                    width=15)
         self.back_button.pack(side=tk.LEFT, padx=5)
 
         self.solve_button = ttk.Button(button_frame,
@@ -181,8 +186,7 @@ class DrawGUI:
                                 style='Controls.TLabel')
         weight_label.pack(pady=(10, 0))
 
-
-    def on_back_pressed(self):  
+    def on_back_pressed(self):
         for widget in self.main_container.winfo_children():
             widget.pack_forget()
 
@@ -193,72 +197,107 @@ class DrawGUI:
         if hasattr(self, 'menu_screen'):
             self.menu_screen.show()
 
-
     def draw_state(self, state):
         self.canvas.delete("all")
-        if not state.map:
+
+        # Validate state
+        if not hasattr(state, 'width') or not hasattr(state, 'height'):
             return
 
+        if state.width == 0 or state.height == 0:
+            return
+
+        # Get canvas dimensions
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
 
-        map_width = len(state.map)
-        map_height = len(state.map[0])
+        # If canvas has no size yet, wait for it to be ready
+        if canvas_width <= 1 or canvas_height <= 1:
+            self.canvas.after(100, lambda: self.draw_state(state))
+            return
 
-        cell_width = canvas_width / (map_width + 2)
-        cell_height = canvas_height / (map_height + 2)
+        # Calculate cell size
+        cell_width = canvas_width / (state.width + 2)
+        cell_height = canvas_height / (state.height + 2)
         cell_size = min(cell_width, cell_height)
 
-        self.wall_photo = ImageTk.PhotoImage(self.wall_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-        self.stone_photo = ImageTk.PhotoImage(self.stone_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-        self.ares_photo = ImageTk.PhotoImage(self.ares_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-        self.switch_photo = ImageTk.PhotoImage(self.switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-        self.empty_photo = ImageTk.PhotoImage(self.empty_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-        self.surround_photo = ImageTk.PhotoImage(self.surround_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))       
-        #self.stone_on_switch_photo = ImageTk.PhotoImage(self.stone_on_switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        # Resize images
+        try:
+            self.wall_photo = ImageTk.PhotoImage(self.wall_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+            self.stone_photo = ImageTk.PhotoImage(self.stone_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+            self.ares_photo = ImageTk.PhotoImage(self.ares_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+            self.switch_photo = ImageTk.PhotoImage(self.switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+            self.empty_photo = ImageTk.PhotoImage(self.empty_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+            self.surround_photo = ImageTk.PhotoImage(self.surround_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        except Exception as e:
+            return
 
-        x_offset = (canvas_width - (map_width * cell_size)) / 2
-        y_offset = (canvas_height - (map_height * cell_size)) / 2
+        # Calculate offsets for centering
+        x_offset = (canvas_width - (state.width * cell_size)) / 2
+        y_offset = (canvas_height - (state.height * cell_size)) / 2
 
-        for y in range(map_height):
-            for x in range(map_width):
-                char = state.map[x][y]
+        # Draw the game state
+        for y in range(state.height):
+            for x in range(state.width):
                 x1 = x_offset + x * cell_size
                 y1 = y_offset + y * cell_size
 
-                self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.empty_photo, anchor=tk.CENTER)
+                # Draw empty background for all cells
+                self.canvas.create_image(
+                    int(x1 + cell_size / 2),
+                    int(y1 + cell_size / 2),
+                    image=self.empty_photo,
+                    anchor=tk.CENTER
+                )
 
-                if char == '#':
-                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.wall_photo, anchor=tk.CENTER)
+                # Draw walls
+                if (x, y) in state.walls:
+                    self.canvas.create_image(
+                        int(x1 + cell_size / 2),
+                        int(y1 + cell_size / 2),
+                        image=self.wall_photo,
+                        anchor=tk.CENTER
+                    )
 
-                elif char == '$':
-                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_photo, anchor=tk.CENTER)
-                    weight = state.get_weight(x, y)
+                # Draw switches
+                if (x, y) in state.switches:
+                    self.canvas.create_image(
+                        int(x1 + cell_size / 2),
+                        int(y1 + cell_size / 2),
+                        image=self.surround_photo,
+                        anchor=tk.CENTER
+                    )
+                    self.canvas.create_image(
+                        int(x1 + cell_size / 2),
+                        int(y1 + cell_size / 2),
+                        image=self.switch_photo,
+                        anchor=tk.CENTER
+                    )
+
+                # Draw stones
+                if (x, y) in state.stones:
+                    self.canvas.create_image(
+                        int(x1 + cell_size / 2),
+                        int(y1 + cell_size / 2),
+                        image=self.stone_photo,
+                        anchor=tk.CENTER
+                    )
+                    # Draw stone weight if it exists
+                    weight = state.stones.get((x, y), 0)
                     if weight > 0:
-                        text_x = x1 + cell_size / 2
-                        text_y = y1 + cell_size / 2
                         self.canvas.create_text(
-                            text_x, text_y, text=str(weight),
-                            fill='white', font=('Helvetica', int(cell_size / 3))
+                            int(x1 + cell_size / 2),
+                            int(y1 + cell_size / 2),
+                            text=str(weight),
+                            fill='white',
+                            font=('Helvetica', int(cell_size / 3))
                         )
 
-                elif char == '*':
-                    #self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_on_switch_photo, anchor=tk.CENTER)
-                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.surround_photo, anchor=tk.CENTER)
-                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_photo, anchor=tk.CENTER)
-                    weight = state.get_weight(x, y)
-                    if weight > 0:
-                        text_x = x1 + cell_size / 2
-                        text_y = y1 + cell_size / 2
-                        self.canvas.create_text(
-                            text_x, text_y, text=str(weight),
-                            fill='white', font=('Helvetica', int(cell_size / 3))
-                        )
-
-                elif char == '@':
-                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.ares_photo, anchor=tk.CENTER)
-
-                elif char == '.':
-                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.surround_photo, anchor=tk.CENTER)
-                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.switch_photo, anchor=tk.CENTER)
-
+                # Draw player
+                if hasattr(state, 'player_pos') and state.player_pos == (x, y):
+                    self.canvas.create_image(
+                        int(x1 + cell_size / 2),
+                        int(y1 + cell_size / 2),
+                        image=self.ares_photo,
+                        anchor=tk.CENTER
+                    )

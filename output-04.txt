@@ -4,3 +4,6 @@ ruurDDllllddlluRluuRRdDldRRuuUluR
 A*
 Steps: 33, Weight: 55, Nodes: 11123, Time (ms): 270.64, Memory (MB): 0.71
 ruurDDuulllllldRlddRRuUluRRddDldR
+A*
+Steps: 33, Weight: 55, Nodes: 11123, Time (ms): 653.15, Memory (MB): 0.64
+ruurDDuulllllldRlddRRuUluRRddDldR

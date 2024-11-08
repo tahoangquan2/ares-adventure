@@ -10,3 +10,6 @@ ulDrdrrU
 DFS
 Steps: 10, Weight: 80, Nodes: 23, Time (ms): 1.11, Memory (MB): 0.00
 ulDurrddrU
+BFS
+Steps: 8, Weight: 78, Nodes: 53, Time (ms): 0.61, Memory (MB): 0.02
+ulDrdrrU
