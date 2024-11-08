@@ -1,12 +1,22 @@
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageTk
+import os
 
 class DrawGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Ares Stone Game")
 
-        # Initialize variables before setup
+        current_dir = os.path.dirname(__file__)
+        self.wall_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Blocks/block_01.png"))
+        self.stone_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Stone/tile000.png"))
+        self.ares_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Player/player_03.png"))
+        self.switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Environment/environment_10.png"))
+        self.empty_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Ground/ground_04.png"))
+        self.surround_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Environment/environment_06.png"))
+        #self.stone_on_switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Stone/tile000.png"))
+
         self.selected_level = tk.StringVar()
         self.selected_algorithm = tk.StringVar()
         self.weight_var = tk.StringVar(value="Total Weight: 0       Step: 0")
@@ -16,9 +26,7 @@ class DrawGUI:
         self.setup_window()
         self.create_gui_elements()
 
-        # Set default algorithm to BFS
         self.selected_algorithm.set("bfs")
-        # Set default level to 1
         self.selected_level.set("1")
 
     def setup_styles(self):
@@ -33,13 +41,13 @@ class DrawGUI:
 
         # New radio button styles
         style.configure('Sidebar.TRadiobutton',
-                        background='#34495e',
-                        foreground='white',
-                        font=('Helvetica', 11),
-                        padding=5)
+                       background='#34495e',
+                       foreground='white',
+                       font=('Helvetica', 11),
+                       padding=5)
         style.map('Sidebar.TRadiobutton',
-                background=[('selected', '#3498db'), ('active', '#2980b9')],
-                foreground=[('selected', 'white'), ('active', 'white')])
+                 background=[('selected', '#3498db'), ('active', '#2980b9')],
+                 foreground=[('selected', 'white'), ('active', 'white')])
 
     def setup_window(self):
         self.root.geometry("1280x720")
@@ -47,7 +55,7 @@ class DrawGUI:
         self.main_container = ttk.Frame(self.root, style='Game.TFrame')
         self.main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-    def create_gui_elements(self):
+    def create_gui_elements(self): 
         self.create_left_sidebar()
         self.create_game_display()
         self.create_right_sidebar()
@@ -64,7 +72,6 @@ class DrawGUI:
         levels_container = ttk.Frame(sidebar, style='Sidebar.TFrame')
         levels_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 20))
 
-        # Create scrollable frame for levels
         canvas = tk.Canvas(levels_container, bg='#34495e', highlightthickness=0)
         scrollbar = ttk.Scrollbar(levels_container, orient=tk.VERTICAL, command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas, style='Sidebar.TFrame')
@@ -77,7 +84,6 @@ class DrawGUI:
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=220)
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Add radio buttons for levels
         for i in range(1, 11):
             level_radio = ttk.Radiobutton(
                 scrollable_frame,
@@ -91,7 +97,6 @@ class DrawGUI:
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Configure canvas scrolling
         canvas.bind('<Enter>', lambda e: canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(-1*(e.delta//120), "units")))
         canvas.bind('<Leave>', lambda e: canvas.unbind_all("<MouseWheel>"))
 
@@ -147,7 +152,7 @@ class DrawGUI:
                                     text="Back",
                                     style='Modern.TButton',
                                     command=self.on_back_pressed,
-                                    width=15)
+                                    width=15)  
         self.back_button.pack(side=tk.LEFT, padx=5)
 
         self.solve_button = ttk.Button(button_frame,
@@ -156,24 +161,28 @@ class DrawGUI:
                                     width=15)
         self.solve_button.pack(side=tk.LEFT, padx=5)
 
-        # Create but don't pack the play and next buttons initially
         self.play_button = ttk.Button(button_frame,
                                     text="Play",
                                     style='Modern.TButton',
-                                    width=15)
+                                    width=15,
+                                    state='disabled')
+        self.play_button.pack(side=tk.LEFT, padx=5)
 
         self.next_button = ttk.Button(button_frame,
                                     text="Next Step",
                                     style='Modern.TButton',
-                                    width=15)
+                                    width=15,
+                                    state='disabled')
+        self.next_button.pack(side=tk.LEFT, padx=5)
 
         weight_label = ttk.Label(control_container,
-                               textvariable=self.weight_var,
-                               font=('Helvetica', 12),
-                               style='Controls.TLabel')
+                                textvariable=self.weight_var,
+                                font=('Helvetica', 12),
+                                style='Controls.TLabel')
         weight_label.pack(pady=(10, 0))
 
-    def on_back_pressed(self):
+
+    def on_back_pressed(self):  
         for widget in self.main_container.winfo_children():
             widget.pack_forget()
 
@@ -184,95 +193,72 @@ class DrawGUI:
         if hasattr(self, 'menu_screen'):
             self.menu_screen.show()
 
+
     def draw_state(self, state):
         self.canvas.delete("all")
-        if state.width == 0 or state.height == 0:
+        if not state.map:
             return
 
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
-        map_height = state.height
-        map_width = state.width
+
+        map_width = len(state.map)
+        map_height = len(state.map[0])
 
         cell_width = canvas_width / (map_width + 2)
         cell_height = canvas_height / (map_height + 2)
         cell_size = min(cell_width, cell_height)
 
+        self.wall_photo = ImageTk.PhotoImage(self.wall_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.stone_photo = ImageTk.PhotoImage(self.stone_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.ares_photo = ImageTk.PhotoImage(self.ares_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.switch_photo = ImageTk.PhotoImage(self.switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.empty_photo = ImageTk.PhotoImage(self.empty_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.surround_photo = ImageTk.PhotoImage(self.surround_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))       
+        #self.stone_on_switch_photo = ImageTk.PhotoImage(self.stone_on_switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+
         x_offset = (canvas_width - (map_width * cell_size)) / 2
         y_offset = (canvas_height - (map_height * cell_size)) / 2
 
-        colors = {
-            '#': '#34495e',  # Wall
-            '$': '#e67e22',  # Stone
-            '@': '#e74c3c',  # Ares
-            '.': '#f1c40f',  # Switch
-            ' ': '#ffffff'   # Empty
-        }
-
-        # Draw empty cells and walls
         for y in range(map_height):
             for x in range(map_width):
+                char = state.map[x][y]
                 x1 = x_offset + x * cell_size
                 y1 = y_offset + y * cell_size
-                x2 = x1 + cell_size
-                y2 = y1 + cell_size
 
-                # Calculate padded coordinates for rounded elements
-                padding = cell_size * 0.2
-                x1p, y1p = x1 + padding, y1 + padding
-                x2p, y2p = x2 - padding, y2 - padding
+                self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.empty_photo, anchor=tk.CENTER)
 
-                pos = (x, y)
-                if pos in state.walls:
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill=colors['#'], width=0)
+                if char == '#':
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.wall_photo, anchor=tk.CENTER)
 
-        # Draw switches (under stones and player)
-        for x, y in state.switches:
-            x1 = x_offset + x * cell_size
-            y1 = y_offset + y * cell_size
-            padding = cell_size * 0.2
-            x1p = x1 + padding
-            y1p = y1 + padding
-            x2p = x1p + cell_size - 2*padding
-            y2p = y1p + cell_size - 2*padding
+                elif char == '$':
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_photo, anchor=tk.CENTER)
+                    weight = state.get_weight(x, y)
+                    if weight > 0:
+                        text_x = x1 + cell_size / 2
+                        text_y = y1 + cell_size / 2
+                        self.canvas.create_text(
+                            text_x, text_y, text=str(weight),
+                            fill='white', font=('Helvetica', int(cell_size / 3))
+                        )
 
-            if (x, y) not in state.stones and (x, y) != state.player_pos:
-                self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['.'], width=0)
+                elif char == '*':
+                    #self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_on_switch_photo, anchor=tk.CENTER)
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.surround_photo, anchor=tk.CENTER)
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_photo, anchor=tk.CENTER)
+                    weight = state.get_weight(x, y)
+                    if weight > 0:
+                        text_x = x1 + cell_size / 2
+                        text_y = y1 + cell_size / 2
+                        self.canvas.create_text(
+                            text_x, text_y, text=str(weight),
+                            fill='white', font=('Helvetica', int(cell_size / 3))
+                        )
 
-        # Draw stones
-        for (x, y), weight in state.stones.items():
-            x1 = x_offset + x * cell_size
-            y1 = y_offset + y * cell_size
-            padding = cell_size * 0.2
-            x1p = x1 + padding
-            y1p = y1 + padding
-            x2p = x1p + cell_size - 2*padding
-            y2p = y1p + cell_size - 2*padding
+                elif char == '@':
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.ares_photo, anchor=tk.CENTER)
 
-            self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['$'], width=0)
-            if (x, y) in state.switches:
-                self.canvas.create_oval(x1p, y1p, x2p, y2p, outline=colors['.'], width=2)
+                elif char == '.':
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.surround_photo, anchor=tk.CENTER)
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.switch_photo, anchor=tk.CENTER)
 
-            # Draw weight
-            if weight > 0:
-                text_x = (x1p + x2p) / 2
-                text_y = (y1p + y2p) / 2
-                self.canvas.create_text(text_x, text_y,
-                                    text=str(weight),
-                                    fill='white',
-                                    font=('Helvetica', int(cell_size / 3)))
-
-        # Draw player
-        if state.player_pos:
-            x, y = state.player_pos
-            x1 = x_offset + x * cell_size
-            y1 = y_offset + y * cell_size
-            padding = cell_size * 0.2
-            x1p = x1 + padding
-            y1p = y1 + padding
-            x2p = x1p + cell_size - 2*padding
-            y2p = y1p + cell_size - 2*padding
-
-            self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['@'], width=0)
-            if state.player_on_switch:
-                self.canvas.create_oval(x1p, y1p, x2p, y2p, outline=colors['.'], width=3)
