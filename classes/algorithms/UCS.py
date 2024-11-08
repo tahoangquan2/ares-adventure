@@ -97,19 +97,6 @@ class UCSSolver:
 
         return False
 
-    def solve(self):
-        self.reset_solver()
-        operations = 0
-
-        while operations < self.operation_limit:
-            operations += 1
-            if self.process_one_state():
-                return True
-            if not self.priority_queue:
-                return False
-
-        return False
-
     def can_move(self, state, x, y, dx, dy):
         return self.character_move.can_move(state, x, y, dx, dy)
 

@@ -95,17 +95,6 @@ class BFSSolver:
 
         return False
 
-    def solve(self):
-        self.reset_solver()
-        operations = 0
-
-        while self.queue and operations < self.operation_limit:
-            operations += 1
-            if self.process_one_state():
-                return True
-
-        return False
-
     def save_metrics(self, level_number):
         self.metrics.save_to_file("BFS", level_number)
 
