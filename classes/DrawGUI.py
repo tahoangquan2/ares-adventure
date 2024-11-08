@@ -1,16 +1,21 @@
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
+import os
 
 class DrawGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Ares Stone Game")
 
+        current_dir = os.path.dirname(__file__)
+        self.wall_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Blocks/block_01.png"))
+        self.stone_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Stone/tile000.png"))
+        self.ares_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Player/player_03.png"))
+        self.switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Ground/ground_01.png"))
+        self.empty_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Ground/ground_04.png"))
+        self.stone_on_switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Stone/tile000.png"))
 
-        self.original_wall_image = Image.open("D:/APCSDoc/Nam3/HK1/AI/Project/ares-adventure/classes/brick_wall-red.png")
-        #self.wall_image = ImageTk.PhotoImage(self.original_wall_image.resize((50, 50), Image.Resampling.LANCZOS))
-        # Initialize variables before setup
         self.selected_level = tk.StringVar()
         self.selected_algorithm = tk.StringVar()
         self.weight_var = tk.StringVar(value="Total Weight: 0       Step: 0")
@@ -198,84 +203,75 @@ class DrawGUI:
         if not state.map:
             return
 
-        # Get canvas dimensions
+        # Calculate dimensions
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
-        print("Canvas width:", canvas_width)
-        print("Canvas height:", canvas_height)
 
-        # Calculate map dimensions based on the state's map structure
-        map_width = len(state.map)  # Number of rows
-        map_height = len(state.map[0]) if map_width > 0 else 0  # Number of columns
-        print("Map width:", map_width)
-        print("Map height:", map_height)
 
-        # Calculate cell size to fit map within canvas, maintaining padding and aspect ratio
-        cell_width = canvas_width / (map_width + 2)  # Adjusted for dynamic width scaling
-        cell_height = canvas_height / (map_height + 2)  # Adjusted for dynamic height scaling
-        cell_size = min(cell_width, cell_height)  # Adjusted to keep cell size consistent
-        print("Cell width:", cell_width)
-        print("Cell height:", cell_height)
-        print("Cell size:", cell_size)
+        map_width = len(state.map)
+        map_height = len(state.map[0])
 
-        # Calculate offsets to center the map within the canvas
-        x_offset = (canvas_width - (map_width * cell_size)) / 2  # Center map horizontally
-        y_offset = (canvas_height - (map_height * cell_size)) / 2  # Center map vertically
+        # Determine cell size based on map and canvas size
+        cell_width = canvas_width / (map_width + 2)
+        cell_height = canvas_height / (map_height + 2)
+        cell_size = min(cell_width, cell_height)
 
-        # Define colors for different elements
-        colors = {
-            '#': '#34495e',  # Wall
-            '$': '#e67e22',  # Stone
-            '@': '#e74c3c',  # Ares (character)
-            '.': '#f1c40f',  # Switch
-            ' ': '#ffffff'   # Empty space
-        }
+        # Resize images based on cell size
+        self.wall_photo = ImageTk.PhotoImage(self.wall_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.stone_photo = ImageTk.PhotoImage(self.stone_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.ares_photo = ImageTk.PhotoImage(self.ares_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.switch_photo = ImageTk.PhotoImage(self.switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.empty_photo = ImageTk.PhotoImage(self.empty_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.stone_on_switch_photo = ImageTk.PhotoImage(self.stone_on_switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
 
-        self.wall_images = {}  
+        # Center map within the canvas
+        x_offset = (canvas_width - (map_width * cell_size)) / 2
+        y_offset = (canvas_height - (map_height * cell_size)) / 2
 
-        # Draw each element on the map with appropriate scaling
+        # Draw each element based on the character in the map
         for y in range(map_height):
             for x in range(map_width):
                 char = state.map[x][y]
                 x1 = x_offset + x * cell_size
                 y1 = y_offset + y * cell_size
-                x2 = x1 + cell_size
-                y2 = y1 + cell_size
-
-                # Padding for objects, dynamically scaled with cell size
-                # Calculate padding based on the map size (adjustable factor)
-                padding = cell_size * 0.1
-
-                print("Paddingasasas:", padding)
-                # Proportionally adjust padding to cell size
-                x1p, y1p = x1 + padding, y1 + padding
-                x2p, y2p = x2 - padding, y2 - padding
 
                 if char == '#':
-                    wall_image_resized = self.original_wall_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS)
-                    wall_image = ImageTk.PhotoImage(wall_image_resized)
-                    self.wall_images[(x, y)] = wall_image  
-                    self.canvas.create_image(x1, y1, image=wall_image, anchor="nw")
+                    # Draw the wall image
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.wall_photo, anchor=tk.CENTER)
 
-                    # self.canvas.create_rectangle(x1, y1, x2, y2, fill=colors['#'], width=0)
-
-                elif char in ['$', '*']:
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['$'], width=0)
-                    if char == '*':
-                        self.canvas.create_oval(x1p, y1p, x2p, y2p, outline=colors['.'], width=2)
+                elif char == '$':
+                    # Draw the stone image with weight
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_photo, anchor=tk.CENTER)
                     weight = state.get_weight(x, y)
                     if weight > 0:
-                        text_x = (x1 + x2) / 2
-                        text_y = (y1 + y2) / 2
+                        text_x = x1 + cell_size / 2
+                        text_y = y1 + cell_size / 2
                         self.canvas.create_text(
-                            text_x, text_y,
-                            text=str(weight),
-                            fill='white',
-                            font=('Helvetica', int(cell_size / 3))  # Font size scaled with cell size
+                            text_x, text_y, text=str(weight),
+                            fill='white', font=('Helvetica', int(cell_size / 3))
                         )
+
+                elif char == '*':
+                    # Draw the stone on switch image with weight
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_on_switch_photo, anchor=tk.CENTER)
+                    weight = state.get_weight(x, y)
+                    if weight > 0:
+                        text_x = x1 + cell_size / 2
+                        text_y = y1 + cell_size / 2
+                        self.canvas.create_text(
+                            text_x, text_y, text=str(weight),
+                            fill='white', font=('Helvetica', int(cell_size / 3))
+                        )
+
                 elif char == '@':
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['@'], width=0)
+                    # Draw the Ares (character) image
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.ares_photo, anchor=tk.CENTER)
+
                 elif char == '.':
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['.'], width=0)
-                elif char == '+':
-                    self.canvas.create_oval(x1p, y1p, x2p, y2p, fill=colors['@'], outline=colors['.'], width=3)
+                    # Draw the switch image
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.switch_photo, anchor=tk.CENTER)
+
+                elif char == ' ':
+                    # Draw an empty cell or background image
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.empty_photo, anchor=tk.CENTER)
+
