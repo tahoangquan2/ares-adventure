@@ -12,9 +12,10 @@ class DrawGUI:
         self.wall_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Blocks/block_01.png"))
         self.stone_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Stone/tile000.png"))
         self.ares_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Player/player_03.png"))
-        self.switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Ground/ground_01.png"))
+        self.switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Environment/environment_10.png"))
         self.empty_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Ground/ground_04.png"))
-        self.stone_on_switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Stone/tile000.png"))
+        self.surround_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Environment/environment_06.png"))
+        #self.stone_on_switch_image = Image.open(os.path.join(current_dir, "graphics/kenney_sokobanPack/PNG/Retina/Stone/tile000.png"))
 
         self.selected_level = tk.StringVar()
         self.selected_algorithm = tk.StringVar()
@@ -222,7 +223,8 @@ class DrawGUI:
         self.ares_photo = ImageTk.PhotoImage(self.ares_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
         self.switch_photo = ImageTk.PhotoImage(self.switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
         self.empty_photo = ImageTk.PhotoImage(self.empty_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-        self.stone_on_switch_photo = ImageTk.PhotoImage(self.stone_on_switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+        self.surround_photo = ImageTk.PhotoImage(self.surround_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))       
+        #self.stone_on_switch_photo = ImageTk.PhotoImage(self.stone_on_switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
 
         # Center map within the canvas
         x_offset = (canvas_width - (map_width * cell_size)) / 2
@@ -234,6 +236,8 @@ class DrawGUI:
                 char = state.map[x][y]
                 x1 = x_offset + x * cell_size
                 y1 = y_offset + y * cell_size
+
+                self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.empty_photo, anchor=tk.CENTER)
 
                 if char == '#':
                     # Draw the wall image
@@ -253,7 +257,9 @@ class DrawGUI:
 
                 elif char == '*':
                     # Draw the stone on switch image with weight
-                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_on_switch_photo, anchor=tk.CENTER)
+                    #self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_on_switch_photo, anchor=tk.CENTER)
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.surround_photo, anchor=tk.CENTER)
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.stone_photo, anchor=tk.CENTER)
                     weight = state.get_weight(x, y)
                     if weight > 0:
                         text_x = x1 + cell_size / 2
@@ -264,14 +270,12 @@ class DrawGUI:
                         )
 
                 elif char == '@':
-                    # Draw the Ares (character) image
                     self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.ares_photo, anchor=tk.CENTER)
 
                 elif char == '.':
-                    # Draw the switch image
+                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.surround_photo, anchor=tk.CENTER)
                     self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.switch_photo, anchor=tk.CENTER)
 
-                elif char == ' ':
-                    # Draw an empty cell or background image
-                    self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.empty_photo, anchor=tk.CENTER)
+                # elif char == ' ':
+                #     self.canvas.create_image(x1 + cell_size / 2, y1 + cell_size / 2, image=self.empty_photo, anchor=tk.CENTER)
 
