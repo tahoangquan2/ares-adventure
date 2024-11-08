@@ -9,11 +9,11 @@ class RoundedButton(tk.Canvas):
         self.bg = bg
         self.fg = fg
 
-        # self.configure(width=200, height=60, bg=parent['bg'], highlightthickness=0) 
+        # self.configure(width=200, height=60, bg=parent['bg'], highlightthickness=0)
         # self.button = self.create_rounded_rectangle(5, 5, 195, 55, radius=self.radius, fill=self.bg, outline="")
         # self.text_id = self.create_text(100, 30, text=self.text, font=("Verdana", 15, 'bold'), fill=self.fg)
 
-        self.configure(width=250, height=80, bg=parent['bg'], highlightthickness=0) 
+        self.configure(width=250, height=80, bg=parent['bg'], highlightthickness=0)
 
         self.button = self.create_rounded_rectangle(5, 5, 245, 75, radius=self.radius, fill=self.bg, outline="")
 
@@ -36,12 +36,12 @@ class RoundedButton(tk.Canvas):
             self.command()
 
     def on_enter(self, event):
-        self.itemconfig(self.button, fill='#1a73e8')  
-        self.itemconfig(self.text_id, fill='#ffffff')  
+        self.itemconfig(self.button, fill='#1a73e8')
+        self.itemconfig(self.text_id, fill='#ffffff')
 
     def on_leave(self, event):
-        self.itemconfig(self.button, fill=self.bg)  
-        self.itemconfig(self.text_id, fill=self.fg)  
+        self.itemconfig(self.button, fill=self.bg)
+        self.itemconfig(self.text_id, fill=self.fg)
 
 class RoundedFrame(tk.Canvas):
     def __init__(self, parent, width, height, corner_radius=20, bg_color='#f4f6f7', border_color='#154360', border_width=2, **kwargs):
@@ -66,4 +66,3 @@ class RoundedFrame(tk.Canvas):
             x1, y1
         ]
         return self.create_polygon(points, **kwargs, smooth=True)
-
