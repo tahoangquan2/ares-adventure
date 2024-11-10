@@ -1,4 +1,5 @@
 import tkinter as tk
+import os
 from classes.RoundedButton import RoundedButton
 from classes.RoundedButton import RoundedFrame
 
@@ -7,7 +8,7 @@ class MenuScreen:
         self.root = root
         self.frame = tk.Frame(root, bg='#d6eaf8')
         self.frame.pack(expand=True, fill='both')
-        
+
         # Display game title at the top
         title_label = tk.Label(self.frame, text="Ares Stone Game", font=("Verdana", 32, 'bold'), bg='#d6eaf8', fg='#154360')
         title_label.pack(pady=(30, 10))
@@ -68,4 +69,5 @@ class MenuScreen:
         self.frame.pack_forget()
 
     def quit_app(self):
-        self.root.quit()
+        self.root.destroy()
+        os._exit(0)
