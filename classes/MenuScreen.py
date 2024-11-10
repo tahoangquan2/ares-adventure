@@ -69,5 +69,12 @@ class MenuScreen:
         self.frame.pack_forget()
 
     def quit_app(self):
-        self.root.destroy()
+        if hasattr(self.root, 'core') and self.root.core and self.root.core.current_task:
+            self.root.core.current_task.cancel()
+            self.root.core.current_task = None
+
+        try:
+            self.root.destroy()
+        except:
+            pass
         os._exit(0)
