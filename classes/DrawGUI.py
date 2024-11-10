@@ -180,6 +180,12 @@ class DrawGUI:
                                     state='disabled')
         self.next_button.pack(side=tk.LEFT, padx=5)
 
+        self.reset_button = ttk.Button(button_frame,
+                                    text="Reset",
+                                    style='Modern.TButton',
+                                    width=15)
+        self.reset_button.pack_forget()
+
         weight_label = ttk.Label(control_container,
                                 textvariable=self.weight_var,
                                 font=('Helvetica', 12),

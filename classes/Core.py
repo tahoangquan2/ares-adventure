@@ -29,6 +29,7 @@ class Core:
         self.gui.solve_button.config(command=self.start_solve)
         self.gui.play_button.config(command=self.toggle_play)
         self.gui.next_button.config(command=self.next_step)
+        self.gui.reset_button.config(command=lambda: self.reset_full_state())
         self.gui.root.bind('<Configure>', self.update_display)
 
     def load_level(self, level_num):
@@ -185,15 +186,39 @@ class Core:
         self.gui.solve_button.pack(side=tk.LEFT, padx=5)
         self.gui.solve_button.config(text="Solve Puzzle")
         self.gui.solve_button.config(state='normal')
-        # Unpack play and next buttons if they were packed
+        # Unpack play, next, and reset buttons
         self.gui.play_button.pack_forget()
         self.gui.next_button.pack_forget()
+        self.gui.reset_button.pack_forget()
         self.gui.play_button.config(state='normal')
         self.gui.next_button.config(state='normal')
+        self.gui.reset_button.config(state='normal')
 
     def reset_full_state(self):
+        # Load the current level again
+        current_level = self.gui.selected_level.get()
+        self.load_level(current_level)
+
+        # Reset all state variables
         self.current_state = None
-        self.reset_solve_state()
+        self.solver = None
+        self.is_playing = False
+        self.is_solved = False
+        self.current_step = 0
+        self.total_weight = 0
+
+        # Reset GUI elements
+        self.gui.weight_var.set("Total Weight: 0       Step: 0")
+
+        # Reset buttons
+        self.gui.solve_button.pack(side=tk.LEFT, padx=5)
+        self.gui.solve_button.config(text="Solve Puzzle", state='normal')
+        self.gui.play_button.pack_forget()
+        self.gui.next_button.pack_forget()
+        self.gui.reset_button.pack_forget()
+
+        # Load the level again
+        self.load_level(current_level)
 
     def stop_playback(self):
         if self.is_playing:
@@ -234,8 +259,10 @@ class Core:
                     self.gui.draw_state(self.current_state)
                     return True
         else:
-            self.gui.play_button.config(state='disabled')
-            self.gui.next_button.config(state='disabled')
+            # Hide play and next buttons, show reset button
+            self.gui.play_button.pack_forget()
+            self.gui.next_button.pack_forget()
+            self.gui.reset_button.pack(side=tk.LEFT, padx=5)
         return False
 
     # Toggle between play and pause states
