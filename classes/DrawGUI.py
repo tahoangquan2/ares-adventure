@@ -89,7 +89,7 @@ class DrawGUI:
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=220)
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        for i in range(1, 11):
+        for i in range(1, 13):
             level_radio = ttk.Radiobutton(
                 scrollable_frame,
                 text=f"Level {i:02d}",
@@ -187,6 +187,24 @@ class DrawGUI:
         weight_label.pack(pady=(10, 0))
 
     def on_back_pressed(self):
+        if hasattr(self.root, 'core') and self.root.core:
+            self.root.core.reset_full_state()
+
+        # Clear existing canvas
+        self.canvas.delete("all")
+
+        # Reset UI components
+        self.selected_level.set("1")
+        self.selected_algorithm.set("bfs")
+        self.weight_var.set("Total Weight: 0       Step: 0")
+
+        # Show solve button and hide play/next buttons
+        self.solve_button.pack(side=tk.LEFT, padx=5)
+        self.solve_button.config(text="Solve Puzzle", state='normal')
+        self.play_button.pack_forget()
+        self.next_button.pack_forget()
+
+        # Clean up the main container
         for widget in self.main_container.winfo_children():
             widget.pack_forget()
 
@@ -194,6 +212,8 @@ class DrawGUI:
         for widget in self.root.winfo_children():
             if isinstance(widget, ttk.Frame) and (not hasattr(widget, 'frame') or widget != self.menu_screen.frame):
                 widget.pack_forget()
+
+        # Show menu screen
         if hasattr(self, 'menu_screen'):
             self.menu_screen.show()
 

@@ -16,3 +16,6 @@ lluRurrDrdLLLuRRRRRRRurD
 UCS
 Steps: 24, Weight: 429, Nodes: 36421, Time (ms): 555.87, Memory (MB): 14.47
 lluRurrDrdLLLuRRRRRRRurD
+BFS
+Steps: 16, Weight: 711, Nodes: 13167, Time (ms): 217.43, Memory (MB): 0.64
+uLulDrrRRRRRRurD
