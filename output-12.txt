@@ -1,6 +1,0 @@
-BFS
-Steps: 15, Weight: 23, Nodes: 639, Time (ms): 12.81, Memory (MB): 0.25
-dddRRuurrdrruLL
-A*
-Steps: 15, Weight: 23, Nodes: 102, Time (ms): 1.31, Memory (MB): 0.00
-dddRRuurrdrruLL

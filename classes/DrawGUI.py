@@ -247,14 +247,19 @@ class DrawGUI:
         cell_height = canvas_height / (state.height + 2)
         cell_size = min(cell_width, cell_height)
 
-        # Resize images
+        # Round the cell size to prevent fractional pixels
+        cell_size = int(cell_size)
+
+        # Resize images with slightly larger dimensions to prevent gaps
+        padding = 1  # Add 1 pixel padding to prevent gaps
+        image_size = cell_size + padding * 2
         try:
-            self.wall_photo = ImageTk.PhotoImage(self.wall_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-            self.stone_photo = ImageTk.PhotoImage(self.stone_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-            self.ares_photo = ImageTk.PhotoImage(self.ares_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-            self.switch_photo = ImageTk.PhotoImage(self.switch_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-            self.empty_photo = ImageTk.PhotoImage(self.empty_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
-            self.surround_photo = ImageTk.PhotoImage(self.surround_image.resize((int(cell_size), int(cell_size)), Image.LANCZOS))
+            self.wall_photo = ImageTk.PhotoImage(self.wall_image.resize((image_size, image_size), Image.LANCZOS))
+            self.stone_photo = ImageTk.PhotoImage(self.stone_image.resize((image_size, image_size), Image.LANCZOS))
+            self.ares_photo = ImageTk.PhotoImage(self.ares_image.resize((image_size, image_size), Image.LANCZOS))
+            self.switch_photo = ImageTk.PhotoImage(self.switch_image.resize((image_size, image_size), Image.LANCZOS))
+            self.empty_photo = ImageTk.PhotoImage(self.empty_image.resize((image_size, image_size), Image.LANCZOS))
+            self.surround_photo = ImageTk.PhotoImage(self.surround_image.resize((image_size, image_size), Image.LANCZOS))
         except Exception as e:
             return
 
@@ -262,25 +267,37 @@ class DrawGUI:
         x_offset = (canvas_width - (state.width * cell_size)) / 2
         y_offset = (canvas_height - (state.height * cell_size)) / 2
 
-        # Draw the game state
+        # Round the offsets to prevent fractional pixels
+        x_offset = int(x_offset)
+        y_offset = int(y_offset)
+
+        # Draw background first
         for y in range(state.height):
             for x in range(state.width):
+                # Calculate exact pixel positions
                 x1 = x_offset + x * cell_size
                 y1 = y_offset + y * cell_size
 
                 # Draw empty background for all cells
                 self.canvas.create_image(
-                    int(x1 + cell_size / 2),
-                    int(y1 + cell_size / 2),
+                    x1 + cell_size // 2,
+                    y1 + cell_size // 2,
                     image=self.empty_photo,
                     anchor=tk.CENTER
                 )
 
+        # Draw game elements
+        for y in range(state.height):
+            for x in range(state.width):
+                # Calculate exact pixel positions
+                x1 = x_offset + x * cell_size
+                y1 = y_offset + y * cell_size
+
                 # Draw walls
                 if (x, y) in state.walls:
                     self.canvas.create_image(
-                        int(x1 + cell_size / 2),
-                        int(y1 + cell_size / 2),
+                        x1 + cell_size // 2,
+                        y1 + cell_size // 2,
                         image=self.wall_photo,
                         anchor=tk.CENTER
                     )
@@ -288,14 +305,14 @@ class DrawGUI:
                 # Draw switches
                 if (x, y) in state.switches:
                     self.canvas.create_image(
-                        int(x1 + cell_size / 2),
-                        int(y1 + cell_size / 2),
+                        x1 + cell_size // 2,
+                        y1 + cell_size // 2,
                         image=self.surround_photo,
                         anchor=tk.CENTER
                     )
                     self.canvas.create_image(
-                        int(x1 + cell_size / 2),
-                        int(y1 + cell_size / 2),
+                        x1 + cell_size // 2,
+                        y1 + cell_size // 2,
                         image=self.switch_photo,
                         anchor=tk.CENTER
                     )
@@ -303,8 +320,8 @@ class DrawGUI:
                 # Draw stones
                 if (x, y) in state.stones:
                     self.canvas.create_image(
-                        int(x1 + cell_size / 2),
-                        int(y1 + cell_size / 2),
+                        x1 + cell_size // 2,
+                        y1 + cell_size // 2,
                         image=self.stone_photo,
                         anchor=tk.CENTER
                     )
@@ -312,18 +329,18 @@ class DrawGUI:
                     weight = state.stones.get((x, y), 0)
                     if weight > 0:
                         self.canvas.create_text(
-                            int(x1 + cell_size / 2),
-                            int(y1 + cell_size / 2),
+                            x1 + cell_size // 2,
+                            y1 + cell_size // 2,
                             text=str(weight),
                             fill='white',
-                            font=('Helvetica', int(cell_size / 3))
+                            font=('Helvetica', max(int(cell_size / 3), 12))
                         )
 
                 # Draw player
                 if hasattr(state, 'player_pos') and state.player_pos == (x, y):
                     self.canvas.create_image(
-                        int(x1 + cell_size / 2),
-                        int(y1 + cell_size / 2),
+                        x1 + cell_size // 2,
+                        y1 + cell_size // 2,
                         image=self.ares_photo,
                         anchor=tk.CENTER
                     )
