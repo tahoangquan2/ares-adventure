@@ -20,8 +20,9 @@ class App:
         self.menu_screen = MenuScreen(self.root, on_search_click=self.switch_to_search)
         self.menu_screen.show()
 
-        # Set up window close handler
+        # Set up window close handler and bind custom close event
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.root.bind("<<Close>>", lambda e: self.on_closing())
 
     def switch_to_search(self):
         # Hide the menu screen
@@ -40,22 +41,29 @@ class App:
 
     def on_closing(self):
         self.running = False
-        self.root.quit()
         self.root.destroy()
+        # Get the current event loop and stop it
+        loop = asyncio.get_event_loop()
+        loop.stop()
 
-    async def update(self, interval=1/120):
+    async def update(self, interval=1/60):
         while self.running:
             try:
                 self.root.update()
                 await asyncio.sleep(interval)
             except tk.TclError:
                 break
+        loop = asyncio.get_event_loop()
+        loop.stop()
 
 def main():
     app = App()
     try:
         asyncio.run(app.update())
-    except RuntimeError:
+    except (RuntimeError, KeyboardInterrupt):
+        pass
+    # Handle case when window is manually closed
+    except tk.TclError:
         pass
 
 if __name__ == "__main__":

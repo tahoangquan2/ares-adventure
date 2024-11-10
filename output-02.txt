@@ -4,3 +4,18 @@ DrurD
 A*
 Steps: 5, Weight: 8, Nodes: 16, Time (ms): 0.00, Memory (MB): 0.00
 DrurD
+BFS
+Steps: 5, Weight: 8, Nodes: 19, Time (ms): 0.00, Memory (MB): 0.00
+DrurD
+BFS
+Steps: 5, Weight: 8, Nodes: 19, Time (ms): 1.07, Memory (MB): 0.00
+DrurD
+DFS
+Steps: 7, Weight: 10, Nodes: 8, Time (ms): 0.00, Memory (MB): 0.00
+rrDlulD
+DFS
+Steps: 7, Weight: 10, Nodes: 8, Time (ms): 0.00, Memory (MB): 0.00
+rrDlulD
+DFS
+Steps: 7, Weight: 10, Nodes: 8, Time (ms): 0.00, Memory (MB): 0.00
+rrDlulD

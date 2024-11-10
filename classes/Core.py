@@ -29,6 +29,7 @@ class Core:
         self.gui.solve_button.config(command=self.start_solve)
         self.gui.play_button.config(command=self.toggle_play)
         self.gui.next_button.config(command=self.next_step)
+        self.gui.reset_button.config(command=lambda: self.reset_full_state())
         self.gui.root.bind('<Configure>', self.update_display)
 
     def load_level(self, level_num):
@@ -99,58 +100,68 @@ class Core:
         ok_button.pack(pady=(0, 10))
 
     async def solve_puzzle(self):
-        if not self.current_state:
-            return
-
         try:
-            if self.gui.selected_algorithm.get() == "bfs":
-                self.solver = BFSSolver(self.current_state)
-                data_structure = self.solver.queue
-            elif self.gui.selected_algorithm.get() == "dfs":
-                self.solver = DFSSolver(self.current_state)
-                data_structure = self.solver.stack
-            elif self.gui.selected_algorithm.get() == "ucs":
-                self.solver = UCSSolver(self.current_state)
-                data_structure = self.solver.priority_queue
-            else:
-                self.solver = AStarSolver(self.current_state)
-                data_structure = self.solver.priority_queue
+            if not self.current_state:
+                return
 
-            operations = 0
-            chunk_size = 1000
+            try:
+                if self.gui.selected_algorithm.get() == "bfs":
+                    self.solver = BFSSolver(self.current_state)
+                    data_structure = self.solver.queue
+                elif self.gui.selected_algorithm.get() == "dfs":
+                    self.solver = DFSSolver(self.current_state)
+                    data_structure = self.solver.stack
+                elif self.gui.selected_algorithm.get() == "ucs":
+                    self.solver = UCSSolver(self.current_state)
+                    data_structure = self.solver.priority_queue
+                else:
+                    self.solver = AStarSolver(self.current_state)
+                    data_structure = self.solver.priority_queue
 
-            while operations < self.solver.operation_limit:
-                for _ in range(chunk_size):
-                    operations += 1
-                    if self.solver.process_one_state():
-                        self.is_solved = True
-                        # Show play and next buttons, hide solve button
-                        self.gui.solve_button.pack_forget()
-                        self.gui.play_button.pack(side=tk.LEFT, padx=5)
-                        self.gui.next_button.pack(side=tk.LEFT, padx=5)
+                operations = 0
+                chunk_size = 1000
 
-                        # Save metrics after successful solve
-                        level_number = self.gui.selected_level.get()
-                        self.solver.save_metrics(level_number)
-                        return True
+                while operations < self.solver.operation_limit:
+                    for _ in range(chunk_size):
+                        operations += 1
+                        if self.solver.process_one_state():
+                            self.is_solved = True
+                            # Show play and next buttons, hide solve button
+                            self.gui.solve_button.pack_forget()
+                            self.gui.play_button.pack(side=tk.LEFT, padx=5)
+                            self.gui.next_button.pack(side=tk.LEFT, padx=5)
 
-                    if not data_structure:
-                        break
+                            # Save metrics after successful solve
+                            level_number = self.gui.selected_level.get()
+                            self.solver.save_metrics(level_number)
+                            return True
 
-                # Yield control to prevent freezing
-                await asyncio.sleep(0)
+                        if not data_structure:
+                            break
 
-            self.show_error_popup("Cannot solve the puzzle after 1,000,000 operations.")
-            self.gui.solve_button.pack_forget()
-            return False
+                    # Yield control to prevent freezing
+                    await asyncio.sleep(0)
 
-        # Clean up when task is cancelled
+                self.show_error_popup("Cannot solve the puzzle after 1,000,000 operations.")
+                self.gui.solve_button.pack_forget()
+                return False
+
+            # Clean up when task is cancelled
+            except asyncio.CancelledError:
+                self.solver = None
+                self.gui.solve_button.config(text="Solve Puzzle")
+                self.gui.solve_button.pack(side=tk.LEFT, padx=5)
+                # Re-raise to properly handle cancellation
+                raise
+
         except asyncio.CancelledError:
+            # Catch cancellation but don't try to modify GUI elements
             self.solver = None
-            self.gui.solve_button.config(text="Solve Puzzle")
-            self.gui.solve_button.pack(side=tk.LEFT, padx=5)
-            # Re-raise to properly handle cancellation
             raise
+
+        except tk.TclError:
+            # Catch Tcl errors when window is destroyed
+            pass
 
     def start_solve(self):
         if self.current_task:
@@ -175,15 +186,39 @@ class Core:
         self.gui.solve_button.pack(side=tk.LEFT, padx=5)
         self.gui.solve_button.config(text="Solve Puzzle")
         self.gui.solve_button.config(state='normal')
-        # Unpack play and next buttons if they were packed
+        # Unpack play, next, and reset buttons
         self.gui.play_button.pack_forget()
         self.gui.next_button.pack_forget()
+        self.gui.reset_button.pack_forget()
         self.gui.play_button.config(state='normal')
         self.gui.next_button.config(state='normal')
+        self.gui.reset_button.config(state='normal')
 
     def reset_full_state(self):
+        # Load the current level again
+        current_level = self.gui.selected_level.get()
+        self.load_level(current_level)
+
+        # Reset all state variables
         self.current_state = None
-        self.reset_solve_state()
+        self.solver = None
+        self.is_playing = False
+        self.is_solved = False
+        self.current_step = 0
+        self.total_weight = 0
+
+        # Reset GUI elements
+        self.gui.weight_var.set("Total Weight: 0       Step: 0")
+
+        # Reset buttons
+        self.gui.solve_button.pack(side=tk.LEFT, padx=5)
+        self.gui.solve_button.config(text="Solve Puzzle", state='normal')
+        self.gui.play_button.pack_forget()
+        self.gui.next_button.pack_forget()
+        self.gui.reset_button.pack_forget()
+
+        # Load the level again
+        self.load_level(current_level)
 
     def stop_playback(self):
         if self.is_playing:
@@ -224,8 +259,10 @@ class Core:
                     self.gui.draw_state(self.current_state)
                     return True
         else:
-            self.gui.play_button.config(state='disabled')
-            self.gui.next_button.config(state='disabled')
+            # Hide play and next buttons, show reset button
+            self.gui.play_button.pack_forget()
+            self.gui.next_button.pack_forget()
+            self.gui.reset_button.pack(side=tk.LEFT, padx=5)
         return False
 
     # Toggle between play and pause states
