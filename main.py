@@ -62,10 +62,9 @@ def main():
         asyncio.run(app.update())
     except (RuntimeError, KeyboardInterrupt):
         pass
-    finally:
-        # Ensure the app is properly closed
-        if hasattr(app, 'root') and app.root:
-            app.root.destroy()
+    # Handle case when window is manually closed
+    except tk.TclError:
+        pass
 
 if __name__ == "__main__":
     main()

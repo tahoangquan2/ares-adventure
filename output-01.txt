@@ -19,3 +19,12 @@ lluRurrDrdLLLuRRRRRRRurD
 BFS
 Steps: 16, Weight: 711, Nodes: 13167, Time (ms): 217.43, Memory (MB): 0.64
 uLulDrrRRRRRRurD
+BFS
+Steps: 16, Weight: 711, Nodes: 13167, Time (ms): 192.01, Memory (MB): 6.34
+uLulDrrRRRRRRurD
+BFS
+Steps: 16, Weight: 711, Nodes: 13167, Time (ms): 207.84, Memory (MB): 6.33
+uLulDrrRRRRRRurD
+BFS
+Steps: 16, Weight: 711, Nodes: 13167, Time (ms): 194.63, Memory (MB): 6.29
+uLulDrrRRRRRRurD
